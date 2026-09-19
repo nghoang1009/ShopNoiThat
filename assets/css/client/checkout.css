@@ -1,0 +1,196 @@
+/* Layout thanh toán */
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 30px;
+  margin: 30px 0 60px 0;
+}
+
+.checkout-box {
+  background: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  padding: 30px;
+  box-shadow: var(--shadow-sm);
+}
+
+.checkout-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--secondary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(147, 88, 50, 0.1);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* Payment Methods */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.payment-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-option:hover,
+.payment-option.active {
+  border-color: var(--primary-color);
+  background: #fbf7f4;
+}
+
+.payment-option input[type="radio"] {
+  margin-top: 4px;
+  accent-color: var(--primary-color);
+}
+
+.payment-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Mini Order Item trong Checkout */
+.checkout-items {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 5px;
+}
+
+.checkout-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.checkout-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkout-item-img {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+}
+
+.checkout-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkout-item-qty {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.checkout-item-price {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+
+/* Trang thành công */
+.success-card {
+  max-width: 650px;
+  margin: 50px auto;
+  background: #fff;
+  padding: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin: 0 auto 20px auto;
+}
+
+.bank-info-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin: 25px 0;
+  text-align: left;
+}
+
+.bank-info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+@media (max-width: 850px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+}
