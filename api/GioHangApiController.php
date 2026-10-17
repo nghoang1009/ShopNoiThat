@@ -71,6 +71,13 @@ class GioHangApiController extends Controller {
             $userId = $_SESSION['user']['id'] ?? null;
             $sessionId = $userId ? null : $this->getCartSessionId();
 
+            // Tồn kho kiểm tra cộng dồn với số lượng đã có trong giỏ
+            $inCart = $this->gioHangModel->quantityInCart($productId, $userId, $sessionId);
+            if ($inCart + $quantity > (int)$product['so_luong_ton']) {
+                $this->json(['success' => false, 'data' => null, 'message' => "Số lượng vượt tồn kho (còn {$product['so_luong_ton']} sản phẩm, trong giỏ đã có {$inCart})."], 400);
+                break;
+            }
+
             $result = $this->gioHangModel->addToCart($productId, $quantity, $userId, $sessionId);
             if ($result) {
                 $cart = $this->gioHangModel->getCartItems($userId, $sessionId);
@@ -111,7 +118,10 @@ class GioHangApiController extends Controller {
             $sessionId = $userId ? null : $this->getCartSessionId();
 
             $cartItem = $this->gioHangModel->find($cartId);
-            if (!$cartItem) {
+            $isMine = $cartItem && ($userId
+                ? (int)$cartItem['khach_hang_id'] === (int)$userId
+                : (!empty($cartItem['session_id']) && $cartItem['session_id'] === $sessionId));
+            if (!$cartItem || !$isMine) {
                 $this->json(['success' => false, 'data' => null, 'message' => 'Mục giỏ hàng không tồn tại.'], 404);
                 break;
             }

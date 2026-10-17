@@ -558,8 +558,11 @@ class AdminController extends Controller {
         if ($this->isPost()) {
             $status = $_POST['trang_thai'] ?? '';
             $paymentStatus = $_POST['trang_thai_thanh_toan'] ?? null;
-            $this->donHangModel->updateStatus((int)$id, $status, $paymentStatus);
-            set_flash('order_success', 'Cập nhật trạng thái đơn hàng thành công!', 'success');
+            if ($this->donHangModel->updateStatus((int)$id, $status, $paymentStatus)) {
+                set_flash('order_success', 'Cập nhật trạng thái đơn hàng thành công!', 'success');
+            } else {
+                set_flash('order_error', $this->donHangModel->lastError ?: 'Cập nhật trạng thái thất bại.', 'danger');
+            }
             redirect('admin/don-hang/chi-tiet/' . $id);
             return;
         }

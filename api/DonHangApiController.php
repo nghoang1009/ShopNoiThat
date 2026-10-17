@@ -60,7 +60,8 @@ class DonHangApiController extends Controller {
         $rules = [
             'ho_ten_nhan'  => ['required' => true, 'min' => 2, 'max' => 100, 'label' => 'Họ tên người nhận'],
             'sdt_nhan'     => ['required' => true, 'phone' => true, 'label' => 'Số điện thoại nhận hàng'],
-            'dia_chi_giao' => ['required' => true, 'min' => 5, 'label' => 'Địa chỉ nhận hàng']
+            'dia_chi_giao' => ['required' => true, 'min' => 5, 'label' => 'Địa chỉ nhận hàng'],
+            'tinh_thanh'   => ['required' => true, 'label' => 'Tỉnh / Thành phố']
         ];
 
         do {
@@ -90,6 +91,13 @@ class DonHangApiController extends Controller {
 
             // Tính phí ship
             $shippingMethodId = (int)($body['phuong_thuc_van_chuyen_id'] ?? 1);
+
+            // Chỉ chấp nhận phương thức vận chuyển / thanh toán đang bật
+            $methodError = $this->donHangModel->activeMethodsError($shippingMethodId, (int)($body['phuong_thuc_thanh_toan_id'] ?? 1));
+            if ($methodError !== null) {
+                $this->json(['success' => false, 'data' => null, 'message' => $methodError], 400);
+                break;
+            }
             $province = trim($body['tinh_thanh'] ?? '');
             $shippingCalc = $this->vanChuyenModel->calculateShippingFee($shippingMethodId, $cart['total_amount'], $province);
             $shippingFee = (float)$shippingCalc['fee'];
@@ -141,7 +149,7 @@ class DonHangApiController extends Controller {
                 'success' => false,
                 'data'    => null,
                 'message' => $createResult['message'] ?? 'Không thể tạo đơn hàng.'
-            ], 500);
+            ], 409);
             return;
         } while (false);
     }
@@ -216,7 +224,8 @@ class DonHangApiController extends Controller {
                 return;
             }
 
-            $this->json(['success' => false, 'data' => null, 'message' => 'Không tìm thấy đơn hàng hoặc cập nhật thất bại.'], 404);
+            $notFound = $this->donHangModel->lastError === 'Không tìm thấy đơn hàng.';
+            $this->json(['success' => false, 'data' => null, 'message' => $this->donHangModel->lastError ?: 'Cập nhật thất bại.'], $notFound ? 404 : 409);
             return;
         } while (false);
     }
@@ -243,14 +252,26 @@ class DonHangApiController extends Controller {
             }
 
             $dataToUpdate = [];
-            $allowedFields = ['ho_ten_nhan', 'sdt_nhan', 'dia_chi_giao', 'tinh_thanh', 'ghi_chu', 'trang_thai', 'trang_thai_thanh_toan'];
+            $allowedFields = ['ho_ten_nhan', 'sdt_nhan', 'dia_chi_giao', 'tinh_thanh', 'ghi_chu'];
             foreach ($allowedFields as $field) {
                 if (isset($body[$field])) {
                     $dataToUpdate[$field] = trim($body[$field]);
                 }
             }
 
-            $this->donHangModel->update($id, $dataToUpdate);
+            if (!empty($dataToUpdate)) {
+                $this->donHangModel->update($id, $dataToUpdate);
+            }
+
+            // Đổi trạng thái luôn qua updateStatus (validate, hoàn/trừ tồn kho, transaction)
+            if (isset($body['trang_thai']) || isset($body['trang_thai_thanh_toan'])) {
+                $newStatus = isset($body['trang_thai']) ? trim($body['trang_thai']) : $order['trang_thai'];
+                $newPay = isset($body['trang_thai_thanh_toan']) ? trim($body['trang_thai_thanh_toan']) : null;
+                if (!$this->donHangModel->updateStatus($id, $newStatus, $newPay)) {
+                    $this->json(['success' => false, 'data' => null, 'message' => $this->donHangModel->lastError], 409);
+                    break;
+                }
+            }
             $updated = $this->donHangModel->find($id);
 
             $this->json([

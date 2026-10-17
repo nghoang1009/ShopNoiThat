@@ -54,6 +54,24 @@ class DonHangModel extends Model {
         }
     }
 
+    /** Thông báo lỗi của lần gọi updateStatus gần nhất */
+    public string $lastError = '';
+
+    /**
+     * Kiểm tra phương thức vận chuyển / thanh toán còn đang bật. Trả về thông báo lỗi hoặc null nếu hợp lệ.
+     */
+    public function activeMethodsError(int $shippingMethodId, int $paymentMethodId): ?string {
+        $ship = $this->fetch("SELECT trang_thai FROM phuong_thuc_van_chuyen WHERE id = :id", [':id' => $shippingMethodId]);
+        if (!$ship || (int)$ship['trang_thai'] !== 1) {
+            return 'Phương thức vận chuyển đã chọn không tồn tại hoặc đã ngừng hoạt động.';
+        }
+        $pay = $this->fetch("SELECT trang_thai FROM phuong_thuc_thanh_toan WHERE id = :id", [':id' => $paymentMethodId]);
+        if (!$pay || (int)$pay['trang_thai'] !== 1) {
+            return 'Phương thức thanh toán đã chọn không tồn tại hoặc đã ngừng hoạt động.';
+        }
+        return null;
+    }
+
     /**
      * Tạo đơn hàng mới từ giỏ hàng (Transaction an toàn)
      */
@@ -81,7 +99,9 @@ class DonHangModel extends Model {
                         VALUES (:order_id, :product_id, :name, :image, :qty, :price, :subtotal)";
             $stmtItem = $this->db->prepare($sqlItem);
 
-            $sqlUpdateStock = "UPDATE san_pham SET so_luong_ton = GREATEST(0, so_luong_ton - :qty) WHERE id = :pid";
+            // Trừ tồn kho nguyên tử: chỉ thành công khi còn đủ hàng và sản phẩm đang kinh doanh
+            $sqlUpdateStock = "UPDATE san_pham SET so_luong_ton = so_luong_ton - :qty
+                               WHERE id = :pid AND trang_thai = 1 AND so_luong_ton >= :qty2";
             $stmtStock = $this->db->prepare($sqlUpdateStock);
 
             foreach ($cartItems as $item) {
@@ -97,9 +117,13 @@ class DonHangModel extends Model {
 
                 // Trừ tồn kho
                 $stmtStock->execute([
-                    ':qty' => $item['cart_quantity'],
-                    ':pid' => $item['product_id']
+                    ':qty'  => $item['cart_quantity'],
+                    ':qty2' => $item['cart_quantity'],
+                    ':pid'  => $item['product_id']
                 ]);
+                if ($stmtStock->rowCount() === 0) {
+                    throw new DomainException("Sản phẩm \"{$item['ten_san_pham']}\" không còn đủ hàng hoặc đã ngừng kinh doanh. Vui lòng kiểm tra lại giỏ hàng.");
+                }
             }
 
             // 4. Tạo bản ghi Vận Chuyển (van_chuyen)
@@ -138,11 +162,13 @@ class DonHangModel extends Model {
                 'ma_don_hang' => $maDonHang,
                 'ma_van_don'  => $maVanDon
             ];
-        } catch (Exception $e) {
-            $this->db->rollBack();
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             return [
                 'success' => false,
-                'message' => 'Lỗi tạo đơn hàng: ' . $e->getMessage()
+                'message' => $e instanceof DomainException ? $e->getMessage() : 'Lỗi tạo đơn hàng: ' . $e->getMessage()
             ];
         }
     }
@@ -226,44 +252,87 @@ class DonHangModel extends Model {
     }
 
     /**
-     * Cập nhật trạng thái đơn hàng (Xử lý hoàn tồn kho nếu hủy đơn)
+     * Cập nhật trạng thái đơn hàng trong 1 transaction.
+     * - Hủy đơn: hoàn tồn kho (chỉ khi trước đó chưa hủy)
+     * - Bỏ hủy đơn: trừ lại tồn kho, từ chối nếu không đủ hàng
+     * Trả về false và đặt $lastError khi thất bại.
      */
     public function updateStatus(int $orderId, string $status, ?string $paymentStatus = null): bool {
-        $order = $this->find($orderId);
-        if (!$order) return false;
+        $this->lastError = '';
 
-        $oldStatus = $order['trang_thai'];
+        if (!in_array($status, ['cho_xu_ly', 'dang_giao', 'hoan_tat', 'da_huy'], true)) {
+            $this->lastError = 'Trạng thái đơn hàng không hợp lệ.';
+            return false;
+        }
+        if ($paymentStatus !== null && !in_array($paymentStatus, ['chua_thanh_toan', 'da_thanh_toan'], true)) {
+            $this->lastError = 'Trạng thái thanh toán không hợp lệ.';
+            return false;
+        }
 
-        // Nếu trạng thái đổi sang 'da_huy' và trước đó chưa hủy -> hoàn tồn kho
-        if ($status === 'da_huy' && $oldStatus !== 'da_huy') {
-            $items = $this->fetchAll("SELECT san_pham_id, so_luong FROM chi_tiet_don_hang WHERE don_hang_id = :oid", [':oid' => $orderId]);
-            $stmtRestock = $this->db->prepare("UPDATE san_pham SET so_luong_ton = so_luong_ton + :qty WHERE id = :pid");
-            foreach ($items as $item) {
-                if (!empty($item['san_pham_id'])) {
-                    $stmtRestock->execute([':qty' => $item['so_luong'], ':pid' => $item['san_pham_id']]);
+        try {
+            $this->db->beginTransaction();
+
+            // Khóa dòng đơn hàng để tránh hai người đổi trạng thái cùng lúc
+            $order = $this->fetch("SELECT * FROM {$this->table} WHERE id = :id FOR UPDATE", [':id' => $orderId]);
+            if (!$order) {
+                $this->db->rollBack();
+                $this->lastError = 'Không tìm thấy đơn hàng.';
+                return false;
+            }
+
+            $oldStatus = $order['trang_thai'];
+            $items = [];
+            if (($status === 'da_huy') !== ($oldStatus === 'da_huy')) {
+                $items = $this->fetchAll("SELECT san_pham_id, so_luong FROM chi_tiet_don_hang WHERE don_hang_id = :oid", [':oid' => $orderId]);
+            }
+
+            if ($status === 'da_huy' && $oldStatus !== 'da_huy') {
+                // Hủy đơn -> hoàn tồn kho
+                $stmtRestock = $this->db->prepare("UPDATE san_pham SET so_luong_ton = so_luong_ton + :qty WHERE id = :pid");
+                foreach ($items as $item) {
+                    if (!empty($item['san_pham_id'])) {
+                        $stmtRestock->execute([':qty' => $item['so_luong'], ':pid' => $item['san_pham_id']]);
+                    }
+                }
+            } elseif ($oldStatus === 'da_huy' && $status !== 'da_huy') {
+                // Khôi phục đơn đã hủy -> trừ lại tồn kho, phải còn đủ hàng
+                $stmtDeduct = $this->db->prepare("UPDATE san_pham SET so_luong_ton = so_luong_ton - :qty WHERE id = :pid AND so_luong_ton >= :qty2");
+                foreach ($items as $item) {
+                    if (empty($item['san_pham_id'])) continue;
+                    $stmtDeduct->execute([':qty' => $item['so_luong'], ':qty2' => $item['so_luong'], ':pid' => $item['san_pham_id']]);
+                    if ($stmtDeduct->rowCount() === 0) {
+                        throw new DomainException('Không thể khôi phục đơn đã hủy vì sản phẩm trong đơn không còn đủ tồn kho.');
+                    }
                 }
             }
-        }
 
-        $updateData = ['trang_thai' => $status];
-        if ($paymentStatus !== null) {
-            $updateData['trang_thai_thanh_toan'] = $paymentStatus;
-        }
-        if ($status === 'hoan_tat' && ($order['phuong_thuc_thanh_toan'] === 'cod' || $order['phuong_thuc_thanh_toan_id'] == 1)) {
-            $updateData['trang_thai_thanh_toan'] = 'da_thanh_toan';
-        }
+            $updateData = ['trang_thai' => $status];
+            if ($paymentStatus !== null) {
+                $updateData['trang_thai_thanh_toan'] = $paymentStatus;
+            }
+            if ($status === 'hoan_tat' && ($order['phuong_thuc_thanh_toan'] === 'cod' || $order['phuong_thuc_thanh_toan_id'] == 1)) {
+                $updateData['trang_thai_thanh_toan'] = 'da_thanh_toan';
+            }
 
-        $res = $this->update($orderId, $updateData);
+            $res = $this->update($orderId, $updateData);
 
-        // Đồng bộ trạng thái vận chuyển nếu hoàn tất hoặc giao hàng
-        if ($status === 'dang_giao') {
-            $this->query("UPDATE van_chuyen SET trang_thai_giao_hang = 'dang_giao' WHERE don_hang_id = :id AND trang_thai_giao_hang = 'cho_lay_hang'", [':id' => $orderId]);
-        } elseif ($status === 'hoan_tat') {
-            $this->query("UPDATE van_chuyen SET trang_thai_giao_hang = 'da_giao', ngay_giao_thuc_te = NOW() WHERE don_hang_id = :id", [':id' => $orderId]);
-            $this->query("UPDATE thanh_toan SET trang_thai = 'da_thanh_toan', ngay_thanh_toan = NOW() WHERE don_hang_id = :id AND trang_thai = 'cho_thanh_toan'", [':id' => $orderId]);
+            // Đồng bộ trạng thái vận chuyển nếu hoàn tất hoặc giao hàng
+            if ($status === 'dang_giao') {
+                $this->query("UPDATE van_chuyen SET trang_thai_giao_hang = 'dang_giao' WHERE don_hang_id = :id AND trang_thai_giao_hang = 'cho_lay_hang'", [':id' => $orderId]);
+            } elseif ($status === 'hoan_tat') {
+                $this->query("UPDATE van_chuyen SET trang_thai_giao_hang = 'da_giao', ngay_giao_thuc_te = NOW() WHERE don_hang_id = :id", [':id' => $orderId]);
+                $this->query("UPDATE thanh_toan SET trang_thai = 'da_thanh_toan', ngay_thanh_toan = NOW() WHERE don_hang_id = :id AND trang_thai = 'cho_thanh_toan'", [':id' => $orderId]);
+            }
+
+            $this->db->commit();
+            return $res;
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            $this->lastError = $e instanceof DomainException ? $e->getMessage() : 'Không thể cập nhật đơn hàng: ' . $e->getMessage();
+            return false;
         }
-
-        return $res;
     }
 
     /**

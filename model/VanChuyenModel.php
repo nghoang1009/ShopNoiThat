@@ -287,8 +287,12 @@ class VanChuyenModel extends Model {
             $this->create($data);
         }
 
-        // Tự động đồng bộ sang trạng thái của bảng `don_hang`
+        // Tự động đồng bộ sang trạng thái của bảng `don_hang` (bỏ qua đơn đã hủy)
         $orderModel = new Model();
+        $current = $orderModel->fetch("SELECT trang_thai FROM don_hang WHERE id = :id", [':id' => $orderId]);
+        if (($current['trang_thai'] ?? '') === 'da_huy') {
+            return true;
+        }
         if ($status === 'dang_giao' || $status === 'dang_van_chuyen') {
             $orderModel->query("UPDATE don_hang SET trang_thai = 'dang_giao' WHERE id = :id AND trang_thai != 'hoan_tat' AND trang_thai != 'da_huy'", [':id' => $orderId]);
         } elseif ($status === 'da_giao') {

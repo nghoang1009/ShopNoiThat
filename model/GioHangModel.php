@@ -46,7 +46,7 @@ class GioHangModel extends Model {
                        ((CASE WHEN sp.gia_khuyen_mai > 0 THEN sp.gia_khuyen_mai ELSE sp.gia END) * gh.so_luong) as thanh_tien
                 FROM {$this->table} gh
                 JOIN san_pham sp ON gh.san_pham_id = sp.id
-                WHERE " . ($userId ? "gh.khach_hang_id = :uid" : "gh.session_id = :sid") . "
+                WHERE sp.trang_thai = 1 AND " . ($userId ? "gh.khach_hang_id = :uid" : "gh.session_id = :sid") . "
                 ORDER BY gh.id DESC";
 
         $params = $userId ? [':uid' => $userId] : [':sid' => $sessionId];
@@ -64,6 +64,21 @@ class GioHangModel extends Model {
             'total_amount'   => $totalAmount,
             'total_quantity' => $totalQuantity
         ];
+    }
+
+    /**
+     * Số lượng của 1 sản phẩm đang có trong giỏ (để kiểm tra tồn kho cộng dồn)
+     */
+    public function quantityInCart(int $productId, ?int $userId = null, ?string $sessionId = null): int {
+        if (!$userId && !$sessionId) {
+            return 0;
+        }
+        $sql = "SELECT COALESCE(SUM(so_luong), 0) AS qty FROM {$this->table}
+                WHERE san_pham_id = :pid AND " . ($userId ? "khach_hang_id = :uid" : "session_id = :sid");
+        $params = [':pid' => $productId];
+        $params[$userId ? ':uid' : ':sid'] = $userId ?: $sessionId;
+        $row = $this->fetch($sql, $params);
+        return (int)($row['qty'] ?? 0);
     }
 
     /**

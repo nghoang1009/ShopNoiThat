@@ -54,7 +54,8 @@ class DonHangController extends Controller {
         $rules = [
             'ho_ten_nhan'  => ['required' => true, 'min' => 2, 'label' => 'Họ tên người nhận'],
             'sdt_nhan'     => ['required' => true, 'phone' => true, 'label' => 'Số điện thoại nhận hàng'],
-            'dia_chi_giao' => ['required' => true, 'min' => 5, 'label' => 'Địa chỉ nhận hàng']
+            'dia_chi_giao' => ['required' => true, 'min' => 5, 'label' => 'Địa chỉ nhận hàng'],
+            'tinh_thanh'   => ['required' => true, 'label' => 'Tỉnh / Thành phố']
         ];
 
         do {
@@ -78,6 +79,15 @@ class DonHangController extends Controller {
 
             // Tính phí vận chuyển theo phương thức đã chọn
             $shippingMethodId = (int)($post['phuong_thuc_van_chuyen_id'] ?? 1);
+
+            // Chỉ chấp nhận phương thức vận chuyển / thanh toán đang bật
+            $methodError = $this->donHangModel->activeMethodsError($shippingMethodId, (int)($post['phuong_thuc_thanh_toan_id'] ?? 1));
+            if ($methodError !== null) {
+                set_flash('order_error', $methodError, 'danger');
+                set_flash('old_input', $post, 'info');
+                redirect('don-hang/thanh-toan');
+                break;
+            }
             $province = trim($post['tinh_thanh'] ?? '');
             $shippingCalc = $this->vanChuyenModel->calculateShippingFee($shippingMethodId, $cart['total_amount'], $province);
             $shippingFee = (float)$shippingCalc['fee'];
