@@ -152,6 +152,70 @@ class AuthApiController extends Controller {
     }
 
     /**
+     * POST /api/v1/auth/quen-mat-khau  { "email": "..." }
+     * Luôn trả 200 với cùng một thông điệp (không tiết lộ email có tồn tại hay không)
+     */
+    public function forgotPassword(): void {
+        $body = $this->getBody();
+        $email = trim((string)($body['email'] ?? ''));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 100) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Vui lòng nhập địa chỉ email hợp lệ.'], 422);
+            return;
+        }
+
+        $model = $this->model('DatLaiMatKhauModel');
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $payload = json_encode([
+            'success' => true,
+            'data'    => null,
+            'message' => 'Nếu email này thuộc về một tài khoản, hướng dẫn đặt lại mật khẩu đã được gửi.'
+        ], JSON_UNESCAPED_UNICODE);
+
+        $this->respondEarly(200, ['Content-Type: application/json; charset=utf-8'], $payload, function () use ($model, $email, $ip) {
+            $result = $model->requestReset($email, $ip);
+            if ($result) {
+                $model->sendResetEmail($result['user'], $result['token']);
+            }
+        });
+    }
+
+    /**
+     * POST /api/v1/auth/dat-lai-mat-khau  { "token": "...", "mat_khau": "...", "xac_nhan_mat_khau": "..." }
+     */
+    public function resetPassword(): void {
+        $body = $this->getBody();
+        $token = (string)($body['token'] ?? '');
+        $password = (string)($body['mat_khau'] ?? '');
+        $confirm = (string)($body['xac_nhan_mat_khau'] ?? $password);
+
+        if (mb_strlen($password) < 6) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Mật khẩu mới phải có tối thiểu 6 ký tự.'], 422);
+            return;
+        }
+        if (strlen($password) > 72) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Mật khẩu quá dài (tối đa 72 ký tự).'], 422);
+            return;
+        }
+        if ($password !== $confirm) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Mật khẩu xác nhận không khớp.'], 422);
+            return;
+        }
+
+        $model = $this->model('DatLaiMatKhauModel');
+        $user = $model->resetPassword($token, $password);
+        if (!$user) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Token không hợp lệ hoặc đã hết hạn.'], 400);
+            return;
+        }
+
+        $payload = json_encode(['success' => true, 'data' => null, 'message' => 'Đặt lại mật khẩu thành công.'], JSON_UNESCAPED_UNICODE);
+        $this->respondEarly(200, ['Content-Type: application/json; charset=utf-8'], $payload, function () use ($model, $user) {
+            $model->sendChangedNotice($user);
+        });
+    }
+
+    /**
      * GET /api/v1/auth/me
      * Lấy thông tin tài khoản hiện tại
      */

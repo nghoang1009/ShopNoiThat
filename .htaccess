@@ -1,6 +1,14 @@
 RewriteEngine On
 RewriteBase /ShopNoiThat/
 
+# Chặn truy cập trực tiếp vào mã nguồn, cấu hình, dữ liệu và file ẩn (.git, .htaccess...)
+# Lưu ý: URL ảo api/v1/... vẫn đi qua router, chỉ chặn file .php nằm trực tiếp trong thư mục api/
+RewriteRule ^(config|core|model|controller|includes|views|storage|\.git)(/|$) - [F,L]
+RewriteRule ^api/[^/]+\.php$ - [F,L]
+RewriteRule ^app\.php$ - [F,L]
+RewriteRule \.(sql|key|log|md|bak|env)$ - [F,L,NC]
+RewriteRule (^|/)\.(?!well-known) - [F,L]
+
 # Nếu file hoặc thư mục tồn tại thực tế, truy cập trực tiếp
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

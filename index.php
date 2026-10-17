@@ -11,6 +11,7 @@ require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/core/Model.php';
 require_once __DIR__ . '/core/Controller.php';
 require_once __DIR__ . '/core/AiClient.php';
+require_once __DIR__ . '/core/Mailer.php';
 require_once __DIR__ . '/core/App.php';
 
 // 3. Nạp danh sách định tuyến Route

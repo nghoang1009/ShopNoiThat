@@ -34,6 +34,10 @@ App::post('auth/login', ['AuthController', 'login']);
 App::get('auth/register', ['AuthController', 'register']);
 App::post('auth/register', ['AuthController', 'register']);
 App::get('auth/logout', ['AuthController', 'logout']);
+App::get('auth/quen-mat-khau', ['PasswordResetController', 'forgot']);
+App::post('auth/quen-mat-khau', ['PasswordResetController', 'forgot']);
+App::get('auth/dat-lai-mat-khau/{token}', ['PasswordResetController', 'reset']);
+App::post('auth/dat-lai-mat-khau/{token}', ['PasswordResetController', 'reset']);
 App::get('auth/profile', ['AuthController', 'profile']);
 App::post('auth/profile', ['AuthController', 'profile']);
 

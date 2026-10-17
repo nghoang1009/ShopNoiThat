@@ -210,6 +210,38 @@ class Controller {
     }
 
     /**
+     * Gửi phản hồi cho client ngay (đóng kết nối) rồi mới chạy $work.
+     * Dùng cho tác vụ chậm (gửi email) để thời gian phản hồi không phụ thuộc vào kết quả xử lý.
+     */
+    protected function respondEarly(int $status, array $headers, string $body, callable $work): void {
+        ignore_user_abort(true);
+        @set_time_limit(60);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        http_response_code($status);
+        foreach ($headers as $h) {
+            header($h);
+        }
+        header('Connection: close');
+        header('Content-Length: ' . strlen($body));
+        echo $body;
+        while (ob_get_level() > 0) {
+            @ob_end_flush();
+        }
+        flush();
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        try {
+            $work();
+        } catch (Throwable $e) {
+            error_log('[respondEarly] ' . $e->getMessage());
+        }
+        exit;
+    }
+
+    /**
      * Chỉ cho phép vai trò admin (nhân viên bị từ chối 403)
      */
     protected function requireAdminRole(): array {

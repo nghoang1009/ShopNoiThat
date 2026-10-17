@@ -3,6 +3,9 @@ CREATE DATABASE IF NOT EXISTS `qlnoithat` CHARACTER SET utf8mb4 COLLATE utf8mb4_
 USE `qlnoithat`;
 
 -- Xóa bảng cũ theo thứ tự ràng buộc
+DROP TABLE IF EXISTS `tin_nhan_tu_van`;
+DROP TABLE IF EXISTS `phien_tu_van`;
+DROP TABLE IF EXISTS `dat_lai_mat_khau`;
 DROP TABLE IF EXISTS `thanh_toan`;
 DROP TABLE IF EXISTS `van_chuyen`;
 DROP TABLE IF EXISTS `chi_tiet_don_hang`;
@@ -73,6 +76,20 @@ CREATE TABLE `khach_hang` (
   `trang_thai` TINYINT(1) DEFAULT 1,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4b. Bảng dat_lai_mat_khau (token quên mật khẩu, chỉ lưu SHA-256 của token)
+CREATE TABLE `dat_lai_mat_khau` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `khach_hang_id` INT NOT NULL,
+  `token_hash` CHAR(64) NOT NULL UNIQUE,
+  `ip` VARCHAR(45) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `used_at` DATETIME NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`khach_hang_id`),
+  INDEX (`ip`, `created_at`),
+  FOREIGN KEY (`khach_hang_id`) REFERENCES `khach_hang`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Bảng nhan_vien
@@ -226,7 +243,7 @@ CREATE TABLE `tin_nhan_tu_van` (
 -- DỮ LIỆU MẪU
 -- =============================================
 
--- Nhân viên & Khách hàng (Mật khẩu mặc định: 123456)
+-- Nhân viên & Khách hàng (Mật khẩu mặc định: 123456 - đã lưu dạng bcrypt)
 INSERT INTO `nhan_vien` (`id`, `ho_ten`, `tai_khoan`, `mat_khau`, `email`, `sdt`, `vai_tro`, `trang_thai`) VALUES
 (1, 'Quản Trị Viên', 'admin', '$2y$10$RwVhAbVeFFmzF9T9UrQkHujYjVKFP7NMYPiu/x5BB/soN1yqKEm5q', 'admin@shopnoithat.vn', '0901234567', 'admin', 1),
 (2, 'Nhân Viên Bán Hàng', 'nhanvien', '$2y$10$WbJZpBlgJVYQ2WdZVIZpZ.TplHiDu5yu75GC9cZ6qBFLYb2/EhHtW', 'sales@shopnoithat.vn', '0907654321', 'nhan_vien', 1);

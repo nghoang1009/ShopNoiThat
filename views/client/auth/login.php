@@ -24,6 +24,10 @@ $oldEmail = get_flash('old_email') ?? '';
                        placeholder="Nhập mật khẩu của bạn">
             </div>
 
+            <div style="text-align: right; margin-top: 8px; font-size: 14px;">
+                <a href="<?php echo base_url('auth/quen-mat-khau'); ?>" style="color: var(--primary-color);">Quên mật khẩu?</a>
+            </div>
+
             <button type="submit" class="btn btn-primary btn-block" style="padding: 12px; margin-top: 20px;">
                 Đăng Nhập
             </button>

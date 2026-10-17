@@ -134,6 +134,23 @@ ShopNoiThat/
 | `PUT/PATCH` | `/api/v1/nha-cung-cap/{id}` | Cập nhật (trường thiếu giữ nguyên) | Admin / Nhân viên |
 | `DELETE` | `/api/v1/nha-cung-cap/{id}` | Xóa (409 nếu còn sản phẩm liên kết) | Chỉ Admin |
 
+### F. Quên Mật Khẩu (Khách hàng)
+| Phương thức | Endpoint | Chức năng | Body |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/quen-mat-khau` | Gửi email đặt lại mật khẩu (luôn trả 200, không tiết lộ email có tồn tại) | `{ "email": "..." }` |
+| `POST` | `/api/v1/auth/dat-lai-mat-khau` | Đặt mật khẩu mới bằng token trong email | `{ "token": "...", "mat_khau": "...", "xac_nhan_mat_khau": "..." }` |
+
+Trang web: `/auth/quen-mat-khau` và `/auth/dat-lai-mat-khau/{token}`. Token hiệu lực 60 phút, dùng 1 lần, tối đa 3 yêu cầu/giờ/tài khoản và 10 yêu cầu/giờ/IP.
+
+**Cấu hình gửi email** (mặc định `log`: không gửi thật mà ghi nội dung vào `storage/mail.log` để thử khi dev):
+1. Sao chép `config/mail.local.example.php` thành `config/mail.local.php`, điền SMTP (Gmail: dùng *Mật khẩu ứng dụng*) và `app_url`.
+2. Hoặc đặt biến môi trường `MAIL_DRIVER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_ENCRYPTION` (`tls`/`ssl`/`none`), `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, `APP_URL`.
+3. Khi triển khai thật **bắt buộc đặt `APP_URL`** cố định để link trong email không bị giả mạo qua header Host.
+
+### Bảo mật triển khai
+- `.htaccess` chặn truy cập trực tiếp vào `config/`, `core/`, `model/`, `controller/`, `views/`, `includes/`, `storage/`, `.git`, file `.sql/.md/.key/.log`.
+- Khóa ký token tự sinh ở `config/app_secret.key` (hoặc đặt biến môi trường `APP_SECRET`). Không commit và không để lộ file này.
+
 ---
 
 Format response JSON chuẩn:

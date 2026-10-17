@@ -24,6 +24,20 @@ define('AI_API_KEY', getenv('AI_API_KEY') ?: getenv('ANTHROPIC_API_KEY') ?: gete
 define('AI_MODEL', getenv('AI_MODEL') ?: 'claude-3-5-sonnet-20241022');
 define('AI_TIMEOUT', 15); // Timeout 15s tránh treo request
 
+// Cấu hình gửi email (quên mật khẩu, thông báo). Ưu tiên biến môi trường, sau đó config/mail.local.php
+$mailLocal = is_file(__DIR__ . '/mail.local.php') ? (require __DIR__ . '/mail.local.php') : [];
+$mailLocal = is_array($mailLocal) ? $mailLocal : [];
+define('MAIL_DRIVER', getenv('MAIL_DRIVER') ?: ($mailLocal['driver'] ?? 'log'));        // 'log' (ghi file, dùng khi dev), 'smtp', 'mail'
+define('MAIL_HOST', getenv('MAIL_HOST') ?: ($mailLocal['host'] ?? ''));
+define('MAIL_PORT', (int)(getenv('MAIL_PORT') ?: ($mailLocal['port'] ?? 587)));
+define('MAIL_ENCRYPTION', getenv('MAIL_ENCRYPTION') ?: ($mailLocal['encryption'] ?? 'tls')); // 'tls' (STARTTLS), 'ssl', hoặc ''
+define('MAIL_USER', getenv('MAIL_USER') ?: ($mailLocal['user'] ?? ''));
+define('MAIL_PASS', getenv('MAIL_PASS') ?: ($mailLocal['pass'] ?? ''));
+define('MAIL_FROM', getenv('MAIL_FROM') ?: ($mailLocal['from'] ?? 'no-reply@shopnoithat.vn'));
+define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: ($mailLocal['from_name'] ?? 'Shop Nội Thất'));
+// URL gốc dùng trong link gửi qua email. NÊN đặt cố định khi triển khai thật (tránh giả mạo header Host)
+define('APP_URL', rtrim(getenv('APP_URL') ?: ($mailLocal['app_url'] ?? BASE_URL), '/'));
+
 // Bật hiển thị lỗi khi dev (tắt khi production)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
