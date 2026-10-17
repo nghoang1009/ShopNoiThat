@@ -127,6 +127,16 @@ App::post('api/v1/auth/login', ['AuthApiController', 'login']);
 App::post('api/v1/auth/register', ['AuthApiController', 'register']);
 App::post('api/v1/auth/logout', ['AuthApiController', 'logout']);
 App::get('api/v1/auth/me', ['AuthApiController', 'me']);
+App::post('api/v1/auth/quen-mat-khau', ['AuthApiController', 'forgotPassword']);
+App::post('api/v1/auth/dat-lai-mat-khau', ['AuthApiController', 'resetPassword']);
+
+// --- 2.10b. Nhà cung cấp Resource (Admin): /api/v1/nha-cung-cap ---
+App::get('api/v1/nha-cung-cap', ['NhaCungCapApiController', 'index']);
+App::post('api/v1/nha-cung-cap', ['NhaCungCapApiController', 'create']);
+App::get('api/v1/nha-cung-cap/{id}', ['NhaCungCapApiController', 'detail']);
+App::put('api/v1/nha-cung-cap/{id}', ['NhaCungCapApiController', 'update']);
+App::patch('api/v1/nha-cung-cap/{id}', ['NhaCungCapApiController', 'update']);
+App::delete('api/v1/nha-cung-cap/{id}', ['NhaCungCapApiController', 'delete']);
 
 // --- 2.11. AI Assistant Tư Vấn Resource: /api/v1/phien-tu-van ---
 App::post('api/v1/phien-tu-van', ['TuVanApiController', 'createSession']);
@@ -185,7 +195,15 @@ App::get('admin/san-pham/them', ['AdminController', 'sanphamCreate']);
 App::post('admin/san-pham/them', ['AdminController', 'sanphamCreate']);
 App::get('admin/san-pham/sua/{id}', ['AdminController', 'sanphamEdit']);
 App::post('admin/san-pham/sua/{id}', ['AdminController', 'sanphamEdit']);
-App::get('admin/san-pham/xoa/{id}', ['AdminController', 'sanphamDelete']);
+App::post('admin/san-pham/xoa/{id}', ['AdminController', 'sanphamDelete']);
+
+// Quản lý Nhà cung cấp
+App::get('admin/nha-cung-cap', ['NhaCungCapController', 'index']);
+App::get('admin/nha-cung-cap/them', ['NhaCungCapController', 'create']);
+App::post('admin/nha-cung-cap/them', ['NhaCungCapController', 'create']);
+App::get('admin/nha-cung-cap/sua/{id}', ['NhaCungCapController', 'edit']);
+App::post('admin/nha-cung-cap/sua/{id}', ['NhaCungCapController', 'edit']);
+App::post('admin/nha-cung-cap/xoa/{id}', ['NhaCungCapController', 'delete']);
 
 // Quản lý Đơn hàng
 App::get('admin/don-hang', ['AdminController', 'donhangIndex']);

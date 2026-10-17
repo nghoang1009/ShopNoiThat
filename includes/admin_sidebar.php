@@ -21,6 +21,9 @@ $currentUrl = $_GET['url'] ?? '';
         <a href="<?php echo base_url('admin/san-pham'); ?>" class="sidebar-link <?php echo str_starts_with($currentUrl, 'admin/san-pham') ? 'active' : ''; ?>">
             🛋️ Quản lý sản phẩm
         </a>
+        <a href="<?php echo base_url('admin/nha-cung-cap'); ?>" class="sidebar-link <?php echo str_starts_with($currentUrl, 'admin/nha-cung-cap') ? 'active' : ''; ?>">
+            🏭 Nhà cung cấp
+        </a>
 
         <div class="sidebar-section-title" style="margin-top: 15px;">Kinh doanh & Vận hành</div>
         <a href="<?php echo base_url('admin/don-hang'); ?>" class="sidebar-link <?php echo (str_starts_with($currentUrl, 'admin/don-hang')) ? 'active' : ''; ?>">
@@ -73,7 +76,7 @@ $currentUrl = $_GET['url'] ?? '';
     <!-- Admin Content Area -->
     <main class="admin-content">
         <!-- Flash Alert Admin -->
-        <?php foreach (['admin_msg', 'admin_error', 'dm_success', 'dm_error', 'sp_success', 'sp_error', 'order_success', 'order_error', 'nv_success', 'nv_error', 'kh_success', 'vc_success', 'vc_error', 'tt_success', 'tt_error'] as $key): ?>
+        <?php foreach (['admin_msg', 'admin_error', 'dm_success', 'dm_error', 'sp_success', 'sp_error', 'order_success', 'order_error', 'nv_success', 'nv_error', 'ncc_success', 'ncc_error', 'kh_success', 'vc_success', 'vc_error', 'tt_success', 'tt_error'] as $key): ?>
             <?php if (has_flash($key)): $flash = get_flash($key); ?>
                 <div class="badge badge-<?php echo $flash['type']; ?>" style="display:block; padding:12px 20px; font-size:14px; margin-bottom:20px; border-radius:6px;">
                     <?php if (is_array($flash['message'])): ?>

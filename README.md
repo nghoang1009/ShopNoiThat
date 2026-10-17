@@ -125,6 +125,15 @@ ShopNoiThat/
 | `POST` | `/api/don-hang` | Đặt hàng từ giỏ | `{ "ho_ten_nhan": "...", "sdt_nhan": "...", "dia_chi_giao": "...", "tinh_thanh": "...", "phuong_thuc_van_chuyen_id": 1, "phuong_thuc_thanh_toan_id": 2 }` |
 | `PUT` | `/api/don-hang/{id}/trang-thai` | Admin đổi trạng thái đơn | `{ "trang_thai": "hoan_tat", "trang_thai_thanh_toan": "da_thanh_toan" }` |
 
+### E. Nhà Cung Cấp (Admin)
+| Phương thức | Endpoint | Chức năng | Ghi chú |
+|---|---|---|---|
+| `GET` | `/api/v1/nha-cung-cap?search=` | Danh sách kèm số sản phẩm liên kết | Admin / Nhân viên |
+| `GET` | `/api/v1/nha-cung-cap/{id}` | Chi tiết nhà cung cấp | Admin / Nhân viên |
+| `POST` | `/api/v1/nha-cung-cap` | Thêm mới | `{ "ten_nha_cung_cap": "...", "sdt": "...", "email": "...", "dia_chi": "..." }` |
+| `PUT/PATCH` | `/api/v1/nha-cung-cap/{id}` | Cập nhật (trường thiếu giữ nguyên) | Admin / Nhân viên |
+| `DELETE` | `/api/v1/nha-cung-cap/{id}` | Xóa (409 nếu còn sản phẩm liên kết) | Chỉ Admin |
+
 ---
 
 Format response JSON chuẩn:
