@@ -11,6 +11,14 @@ class SanPhamApiController extends Controller {
     }
 
     /**
+     * Số đo lấy từ JSON body thô (getBody() đã escape HTML nên không dùng cho số liệu)
+     */
+    private function rawBodyForSize(): array {
+        $json = json_decode(file_get_contents('php://input'), true);
+        return is_array($json) ? $json : $_POST;
+    }
+
+    /**
      * GET /api/v1/san-pham
      * Lấy danh sách sản phẩm (có lọc, tìm kiếm, sắp xếp, phân trang)
      */
@@ -143,6 +151,16 @@ class SanPhamApiController extends Controller {
                 'noi_bat'         => isset($body['noi_bat']) ? (int)$body['noi_bat'] : 0
             ];
 
+            $sizeInput = $this->rawBodyForSize();
+            if (array_intersect_key($sizeInput, array_flip(['dai_cm', 'rong_cm', 'cao_cm', 'hinh_dang', 'do_cao_cm']))) {
+                $size = SanPhamModel::parseSizeInput($sizeInput);
+                if ($size['error'] !== null) {
+                    $this->json(['success' => false, 'data' => null, 'message' => $size['error']], 400);
+                    break;
+                }
+                $data += $size['data'];
+            }
+
             $id = $this->sanPhamModel->create($data);
             if ($id) {
                 $newProduct = $this->sanPhamModel->find($id);
@@ -202,6 +220,16 @@ class SanPhamApiController extends Controller {
                 'trang_thai'      => isset($body['trang_thai']) ? (int)$body['trang_thai'] : 1,
                 'noi_bat'         => isset($body['noi_bat']) ? (int)$body['noi_bat'] : 0
             ];
+
+            $sizeInput = $this->rawBodyForSize();
+            if (array_intersect_key($sizeInput, array_flip(['dai_cm', 'rong_cm', 'cao_cm', 'hinh_dang', 'do_cao_cm']))) {
+                $size = SanPhamModel::parseSizeInput($sizeInput);
+                if ($size['error'] !== null) {
+                    $this->json(['success' => false, 'data' => null, 'message' => $size['error']], 400);
+                    break;
+                }
+                $data += $size['data'];
+            }
 
             if (!empty($body['hinh_anh'])) {
                 $data['hinh_anh'] = trim($body['hinh_anh']);

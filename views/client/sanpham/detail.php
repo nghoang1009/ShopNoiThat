@@ -117,6 +117,12 @@ $extraImages = !empty($product['hinh_anh_phu']) ? json_decode($product['hinh_anh
                     Sản phẩm này tạm thời hết hàng trong kho. Vui lòng liên hệ hotline để đặt trước!
                 </div>
             <?php endif; ?>
+
+            <?php if (!empty($product['dai_cm']) && !empty($product['rong_cm']) && !empty($product['cao_cm'])): ?>
+            <a href="<?php echo base_url('thiet-ke-phong?add=' . (int)$product['id']); ?>" class="btn btn-outline btn-block" style="margin-top:14px; text-align:center;">
+                📐 Xem trong phòng của bạn (2D / 3D) — <?php echo (int)$product['dai_cm']; ?> × <?php echo (int)$product['rong_cm']; ?> × <?php echo (int)$product['cao_cm']; ?> cm
+            </a>
+            <?php endif; ?>
         </div>
     </div>
 

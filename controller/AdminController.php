@@ -415,6 +415,13 @@ class AdminController extends Controller {
                     break;
                 }
 
+                $size = SanPhamModel::parseSizeInput($_POST);
+                if ($size['error'] !== null) {
+                    set_flash('sp_error', $size['error'], 'danger');
+                    redirect('admin/san-pham/them');
+                    break;
+                }
+
                 $slug = !empty($post['slug']) ? slugify($post['slug']) : slugify($post['ten_san_pham']);
                 $imagePath = $this->handleUpload('hinh_anh', 'products') ?: 'assets/images/default.jpg';
                 $extraImages = $this->handleMultipleUploads('hinh_anh_phu', 'products');
@@ -437,7 +444,7 @@ class AdminController extends Controller {
                     'trang_thai'      => isset($post['trang_thai']) ? (int)$post['trang_thai'] : 1
                 ];
 
-                $this->sanPhamModel->create($data);
+                $this->sanPhamModel->create($data + $size['data']);
                 set_flash('sp_success', 'Thêm sản phẩm nội thất mới thành công!', 'success');
                 redirect('admin/san-pham');
                 return;
@@ -481,6 +488,13 @@ class AdminController extends Controller {
                     break;
                 }
 
+                $size = SanPhamModel::parseSizeInput($_POST);
+                if ($size['error'] !== null) {
+                    set_flash('sp_error', $size['error'], 'danger');
+                    redirect('admin/san-pham/sua/' . $id);
+                    break;
+                }
+
                 $imagePath = $this->handleUpload('hinh_anh', 'products') ?: $product['hinh_anh'];
                 $extraUploaded = $this->handleMultipleUploads('hinh_anh_phu', 'products');
                 $extraImages = !empty($extraUploaded) ? json_encode($extraUploaded) : $product['hinh_anh_phu'];
@@ -502,7 +516,7 @@ class AdminController extends Controller {
                     'trang_thai'      => isset($post['trang_thai']) ? (int)$post['trang_thai'] : 1
                 ];
 
-                $this->sanPhamModel->update((int)$id, $data);
+                $this->sanPhamModel->update((int)$id, $data + $size['data']);
                 set_flash('sp_success', 'Cập nhật sản phẩm thành công!', 'success');
                 redirect('admin/san-pham');
                 return;

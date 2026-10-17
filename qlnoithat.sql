@@ -61,6 +61,11 @@ CREATE TABLE `san_pham` (
   `noi_bat` TINYINT(1) DEFAULT 0 COMMENT '1: Nổi bật, 0: Thường',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `dai_cm` INT NULL,
+  `rong_cm` INT NULL,
+  `cao_cm` INT NULL,
+  `hinh_dang` VARCHAR(10) NOT NULL DEFAULT 'hop',
+  `do_cao_cm` INT NOT NULL DEFAULT 0,
   FOREIGN KEY (`danh_muc_id`) REFERENCES `danh_muc`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`nha_cung_cap_id`) REFERENCES `nha_cung_cap`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -318,3 +323,35 @@ INSERT INTO `thanh_toan` (`id`, `don_hang_id`, `phuong_thuc_thanh_toan_id`, `so_
 (1, 1, 1, 16400000, 'cho_thanh_toan', NULL, NULL, 'Thu tiền mặt khi giao hàng'),
 (2, 2, 2, 4040000, 'da_thanh_toan', 'FT260902998811', '2026-09-02 14:20:00', 'VietQR chuyển khoản VCB'),
 (3, 3, 3, 13900000, 'da_thanh_toan', 'MOMO202609109988', '2026-09-10 09:05:00', 'Thanh toán qua ví MoMo');
+
+-- Số đo cấu trúc (cm) cho công cụ sắp xếp phòng 2D/3D: dài, rộng/sâu, cao, hình dạng, độ cao đặt so với sàn
+UPDATE `san_pham` SET `dai_cm`=220, `rong_cm`=90, `cao_cm`=85, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='sofa-bang-da-y-cao-cap-milano';
+UPDATE `san_pham` SET `dai_cm`=260, `rong_cm`=160, `cao_cm`=80, `hinh_dang`='chu_l', `do_cao_cm`=0 WHERE `slug`='sofa-goc-chu-l-boc-vai-ni-nordic';
+UPDATE `san_pham` SET `dai_cm`=68, `rong_cm`=82, `cao_cm`=100, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ghe-thu-gian-bap-benh-poang';
+UPDATE `san_pham` SET `dai_cm`=160, `rong_cm`=80, `cao_cm`=75, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='bo-ban-an-6-ghe-mat-da-concorde';
+UPDATE `san_pham` SET `dai_cm`=70, `rong_cm`=70, `cao_cm`=45, `hinh_dang`='tron', `do_cao_cm`=0 WHERE `slug`='ban-tra-tron-doi-khung-thep-ma-vang';
+UPDATE `san_pham` SET `dai_cm`=180, `rong_cm`=200, `cao_cm`=90, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='giuong-ngu-go-soi-nga-tokyo-1m8';
+UPDATE `san_pham` SET `dai_cm`=180, `rong_cm`=200, `cao_cm`=120, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='giuong-ngu-boc-nem-ni-luxury-royal';
+UPDATE `san_pham` SET `dai_cm`=200, `rong_cm`=60, `cao_cm`=240, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='tu-quan-ao-canh-kinh-4-canh';
+UPDATE `san_pham` SET `dai_cm`=160, `rong_cm`=40, `cao_cm`=45, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ke-tivi-rut-2-dau-da-nang';
+UPDATE `san_pham` SET `dai_cm`=65, `rong_cm`=65, `cao_cm`=120, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ghe-cong-thai-hoc-sihoo-m57';
+UPDATE `san_pham` SET `dai_cm`=80, `rong_cm`=80, `cao_cm`=60, `hinh_dang`='tron', `do_cao_cm`=180 WHERE `slug`='den-chum-pha-le-nordic-sputnik';
+UPDATE `san_pham` SET `dai_cm`=80, `rong_cm`=20, `cao_cm`=20, `hinh_dang`='hop', `do_cao_cm`=120 WHERE `slug`='den-tha-ban-an-ba-chao';
+UPDATE `san_pham` SET `dai_cm`=180, `rong_cm`=90, `cao_cm`=85, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='sofa-giuong-da-nang-thong-minh-cosy';
+UPDATE `san_pham` SET `dai_cm`=80, `rong_cm`=75, `cao_cm`=88, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ghe-banh-thu-gian-nhung-retro-velvet';
+UPDATE `san_pham` SET `dai_cm`=110, `rong_cm`=110, `cao_cm`=90, `hinh_dang`='tron', `do_cao_cm`=0 WHERE `slug`='ghe-luoi-hat-xop-giot-nuoc-king-size';
+UPDATE `san_pham` SET `dai_cm`=200, `rong_cm`=85, `cao_cm`=75, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ban-an-mo-rong-thong-minh-marble';
+UPDATE `san_pham` SET `dai_cm`=110, `rong_cm`=60, `cao_cm`=45, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ban-tra-sofa-nang-ha-lam-viec';
+UPDATE `san_pham` SET `dai_cm`=135, `rong_cm`=135, `cao_cm`=75, `hinh_dang`='tron', `do_cao_cm`=0 WHERE `slug`='bo-ban-an-tron-mam-xoay-go-soi';
+UPDATE `san_pham` SET `dai_cm`=200, `rong_cm`=220, `cao_cm`=105, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='giuong-ngu-go-oc-cho-walnut-2m';
+UPDATE `san_pham` SET `dai_cm`=180, `rong_cm`=200, `cao_cm`=35, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='giuong-ngu-phan-kieu-nhat-tatami';
+UPDATE `san_pham` SET `dai_cm`=140, `rong_cm`=200, `cao_cm`=160, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='giuong-tang-tre-em-da-nang';
+UPDATE `san_pham` SET `dai_cm`=100, `rong_cm`=24, `cao_cm`=120, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='tu-giay-thong-minh-cua-lat-3-tang';
+UPDATE `san_pham` SET `dai_cm`=120, `rong_cm`=40, `cao_cm`=210, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='tu-ruou-phong-khach-canh-kinh';
+UPDATE `san_pham` SET `dai_cm`=45, `rong_cm`=20, `cao_cm`=140, `hinh_dang`='hop', `do_cao_cm`=30 WHERE `slug`='ke-sach-treo-tuong-xuong-ca';
+UPDATE `san_pham` SET `dai_cm`=45, `rong_cm`=40, `cao_cm`=50, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='tu-dau-giuong-go-soi-nordic';
+UPDATE `san_pham` SET `dai_cm`=75, `rong_cm`=80, `cao_cm`=130, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ghe-giam-doc-da-bo-that-luxury';
+UPDATE `san_pham` SET `dai_cm`=140, `rong_cm`=70, `cao_cm`=95, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='ban-lam-viec-nang-ha-dual-motor';
+UPDATE `san_pham` SET `dai_cm`=40, `rong_cm`=40, `cao_cm`=70, `hinh_dang`='tron', `do_cao_cm`=0 WHERE `slug`='ghe-quay-bar-chan-ma-vang';
+UPDATE `san_pham` SET `dai_cm`=160, `rong_cm`=40, `cao_cm`=210, `hinh_dang`='hop', `do_cao_cm`=0 WHERE `slug`='den-cay-dung-phong-khach-arco';
+UPDATE `san_pham` SET `dai_cm`=30, `rong_cm`=30, `cao_cm`=52, `hinh_dang`='tron', `do_cao_cm`=0 WHERE `slug`='den-ngu-de-ban-gom-su-cao-cap';

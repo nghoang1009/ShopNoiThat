@@ -4,6 +4,127 @@ require_once __DIR__ . '/../core/Model.php';
 class SanPhamModel extends Model {
     protected string $table = 'san_pham';
 
+    /** Kích thước cấu trúc (cm) cho sản phẩm mẫu: slug => [dài, rộng/sâu, cao, hình dạng, độ cao đặt so với sàn] */
+    private const SEED_SIZES = [
+        'sofa-bang-da-y-cao-cap-milano' => [220, 90, 85, 'hop', 0],
+        'sofa-goc-chu-l-boc-vai-ni-nordic' => [260, 160, 80, 'chu_l', 0],
+        'ghe-thu-gian-bap-benh-poang' => [68, 82, 100, 'hop', 0],
+        'bo-ban-an-6-ghe-mat-da-concorde' => [160, 80, 75, 'hop', 0],
+        'ban-tra-tron-doi-khung-thep-ma-vang' => [70, 70, 45, 'tron', 0],
+        'giuong-ngu-go-soi-nga-tokyo-1m8' => [180, 200, 90, 'hop', 0],
+        'giuong-ngu-boc-nem-ni-luxury-royal' => [180, 200, 120, 'hop', 0],
+        'tu-quan-ao-canh-kinh-4-canh' => [200, 60, 240, 'hop', 0],
+        'ke-tivi-rut-2-dau-da-nang' => [160, 40, 45, 'hop', 0],
+        'ghe-cong-thai-hoc-sihoo-m57' => [65, 65, 120, 'hop', 0],
+        'den-chum-pha-le-nordic-sputnik' => [80, 80, 60, 'tron', 180],
+        'den-tha-ban-an-ba-chao' => [80, 20, 20, 'hop', 120],
+        'sofa-giuong-da-nang-thong-minh-cosy' => [180, 90, 85, 'hop', 0],
+        'ghe-banh-thu-gian-nhung-retro-velvet' => [80, 75, 88, 'hop', 0],
+        'ghe-luoi-hat-xop-giot-nuoc-king-size' => [110, 110, 90, 'tron', 0],
+        'ban-an-mo-rong-thong-minh-marble' => [200, 85, 75, 'hop', 0],
+        'ban-tra-sofa-nang-ha-lam-viec' => [110, 60, 45, 'hop', 0],
+        'bo-ban-an-tron-mam-xoay-go-soi' => [135, 135, 75, 'tron', 0],
+        'giuong-ngu-go-oc-cho-walnut-2m' => [200, 220, 105, 'hop', 0],
+        'giuong-ngu-phan-kieu-nhat-tatami' => [180, 200, 35, 'hop', 0],
+        'giuong-tang-tre-em-da-nang' => [140, 200, 160, 'hop', 0],
+        'tu-giay-thong-minh-cua-lat-3-tang' => [100, 24, 120, 'hop', 0],
+        'tu-ruou-phong-khach-canh-kinh' => [120, 40, 210, 'hop', 0],
+        'ke-sach-treo-tuong-xuong-ca' => [45, 20, 140, 'hop', 30],
+        'tu-dau-giuong-go-soi-nordic' => [45, 40, 50, 'hop', 0],
+        'ghe-giam-doc-da-bo-that-luxury' => [75, 80, 130, 'hop', 0],
+        'ban-lam-viec-nang-ha-dual-motor' => [140, 70, 95, 'hop', 0],
+        'ghe-quay-bar-chan-ma-vang' => [40, 40, 70, 'tron', 0],
+        'den-cay-dung-phong-khach-arco' => [160, 40, 210, 'hop', 0],
+        'den-ngu-de-ban-gom-su-cao-cap' => [30, 30, 52, 'tron', 0],
+    ];
+
+    private static bool $sizeColumnsChecked = false;
+
+    public function __construct() {
+        parent::__construct();
+        $this->ensureSizeColumns();
+    }
+
+    /**
+     * Số đo cấu trúc dùng cho công cụ sắp xếp phòng 2D/3D:
+     * dai_cm, rong_cm (chiều sâu), cao_cm, hinh_dang (hop|tron|chu_l), do_cao_cm (đèn treo, kệ treo tường...)
+     */
+    private function ensureSizeColumns(): void {
+        if (self::$sizeColumnsChecked) {
+            return;
+        }
+        self::$sizeColumnsChecked = true;
+
+        try {
+            $has = $this->fetch("SHOW COLUMNS FROM {$this->table} LIKE 'dai_cm'");
+            if ($has) {
+                return;
+            }
+            $this->db->exec("ALTER TABLE {$this->table}
+                ADD COLUMN IF NOT EXISTS `dai_cm` INT NULL,
+                ADD COLUMN IF NOT EXISTS `rong_cm` INT NULL,
+                ADD COLUMN IF NOT EXISTS `cao_cm` INT NULL,
+                ADD COLUMN IF NOT EXISTS `hinh_dang` VARCHAR(10) NOT NULL DEFAULT 'hop',
+                ADD COLUMN IF NOT EXISTS `do_cao_cm` INT NOT NULL DEFAULT 0");
+
+            $stmt = $this->db->prepare("UPDATE {$this->table} SET dai_cm = :d, rong_cm = :r, cao_cm = :c, hinh_dang = :h, do_cao_cm = :e
+                                        WHERE slug = :slug AND dai_cm IS NULL");
+            foreach (self::SEED_SIZES as $slug => [$d, $r, $c, $h, $e]) {
+                $stmt->execute([':d' => $d, ':r' => $r, ':c' => $c, ':h' => $h, ':e' => $e, ':slug' => $slug]);
+            }
+        } catch (Throwable $ex) {
+            error_log('[SanPhamModel] ensureSizeColumns: ' . $ex->getMessage());
+        }
+    }
+
+    /**
+     * Chuẩn hóa & kiểm tra số đo từ form/API (dữ liệu thô). Trả về mảng cột hoặc lỗi.
+     * Để trống cả dài/rộng/cao = sản phẩm chưa có số đo (không dùng được trong công cụ sắp xếp phòng).
+     */
+    public static function parseSizeInput(array $in): array {
+        $num = function ($v) {
+            $v = trim((string)$v);
+            return ($v === '') ? null : $v;
+        };
+        $d = $num($in['dai_cm'] ?? ''); $r = $num($in['rong_cm'] ?? ''); $c = $num($in['cao_cm'] ?? '');
+        $shape = (string)($in['hinh_dang'] ?? 'hop');
+        $elev = $num($in['do_cao_cm'] ?? '0') ?? '0';
+
+        if ($d === null && $r === null && $c === null) {
+            return ['data' => ['dai_cm' => null, 'rong_cm' => null, 'cao_cm' => null, 'hinh_dang' => 'hop', 'do_cao_cm' => 0], 'error' => null];
+        }
+        foreach (['Chiều dài' => $d, 'Chiều rộng/sâu' => $r, 'Chiều cao' => $c] as $label => $v) {
+            if ($v === null || !ctype_digit($v) || (int)$v < 5 || (int)$v > 1000) {
+                return ['data' => [], 'error' => "{$label} phải là số nguyên từ 5 đến 1000 (cm); để trống cả 3 ô nếu chưa có số đo."];
+            }
+        }
+        if (!in_array($shape, ['hop', 'tron', 'chu_l'], true)) {
+            return ['data' => [], 'error' => 'Hình dạng không hợp lệ.'];
+        }
+        if (!ctype_digit($elev) || (int)$elev > 400) {
+            return ['data' => [], 'error' => 'Độ cao đặt so với sàn phải từ 0 đến 400 (cm).'];
+        }
+        return ['data' => [
+            'dai_cm' => (int)$d, 'rong_cm' => (int)$r, 'cao_cm' => (int)$c,
+            'hinh_dang' => $shape, 'do_cao_cm' => (int)$elev,
+        ], 'error' => null];
+    }
+
+    /**
+     * Sản phẩm đang bán có số đo - dữ liệu cho công cụ sắp xếp phòng
+     */
+    public function getPlannerProducts(): array {
+        return $this->fetchAll(
+            "SELECT sp.id, sp.ten_san_pham, sp.slug, sp.danh_muc_id, dm.ten_danh_muc, sp.gia, sp.gia_khuyen_mai,
+                    sp.so_luong_ton, sp.mau_sac, sp.kich_thuoc, sp.hinh_anh,
+                    sp.dai_cm, sp.rong_cm, sp.cao_cm, sp.hinh_dang, sp.do_cao_cm
+             FROM {$this->table} sp
+             JOIN danh_muc dm ON dm.id = sp.danh_muc_id
+             WHERE sp.trang_thai = 1 AND sp.dai_cm IS NOT NULL AND sp.rong_cm IS NOT NULL AND sp.cao_cm IS NOT NULL
+             ORDER BY sp.danh_muc_id, sp.id"
+        );
+    }
+
     /**
      * Lọc và tìm kiếm danh sách sản phẩm nâng cao
      */

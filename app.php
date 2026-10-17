@@ -18,6 +18,9 @@ App::get('san-pham/{slug}', ['SanPhamController', 'detail']);
 // Giỏ hàng
 App::get('gio-hang', ['GioHangController', 'index']);
 
+// Thiết kế phòng 2D / 3D (kéo thả nội thất xem kích thước)
+App::get('thiet-ke-phong', ['PlannerController', 'index']);
+
 // Đơn hàng, Vận chuyển & Thanh toán
 App::get('don-hang/thanh-toan', ['DonHangController', 'checkout']);
 App::post('don-hang/thanh-toan', ['DonHangController', 'store']);

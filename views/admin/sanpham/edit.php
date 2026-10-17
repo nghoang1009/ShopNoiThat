@@ -68,6 +68,7 @@ $extraImages = !empty($product['hinh_anh_phu']) ? json_decode($product['hinh_anh
                 <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Kích thước</label>
                 <input type="text" name="kich_thuoc" value="<?php echo htmlspecialchars($product['kich_thuoc'] ?? ''); ?>" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">
             </div>
+            <?php $sizeValues = $product; require __DIR__ . '/_size_fields.php'; ?>
 
             <div class="form-group">
                 <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Màu sắc</label>

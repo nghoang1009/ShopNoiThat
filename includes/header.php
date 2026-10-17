@@ -107,6 +107,7 @@ $currentUser = $_SESSION['user'] ?? null;
                     <li class="nav-item"><a href="<?php echo base_url('danh-muc/giuong-ngu'); ?>">Giường Ngủ</a></li>
                     <li class="nav-item"><a href="<?php echo base_url('danh-muc/tu-ke-trang-tri'); ?>">Tủ & Kệ</a></li>
                     <li class="nav-item"><a href="<?php echo base_url('danh-muc/den-trang-tri'); ?>">Đèn Trang Trí</a></li>
+                    <li class="nav-item <?php echo (isset($_GET['url']) && $_GET['url'] === 'thiet-ke-phong') ? 'active' : ''; ?>"><a href="<?php echo base_url('thiet-ke-phong'); ?>">📐 Thiết kế phòng 2D/3D</a></li>
                 </ul>
             </div>
         </nav>
