@@ -31,6 +31,7 @@ class AuthApiController extends Controller {
             if ($type === 'admin') {
                 $admin = $this->nhanVienModel->authenticate($account, $password);
                 if ($admin) {
+                    rotate_session();
                     $_SESSION['admin'] = $admin;
                     $admin['token'] = sign_token([
                         'id'      => $admin['id'],
@@ -48,6 +49,7 @@ class AuthApiController extends Controller {
             } else {
                 $user = $this->khachHangModel->authenticate($account, $password);
                 if ($user) {
+                    rotate_session();
                     $_SESSION['user'] = $user;
                     if (!empty($_SESSION['cart_session_id'])) {
                         $this->gioHangModel->mergeGuestCartToUser($_SESSION['cart_session_id'], (int)$user['id']);
@@ -114,6 +116,7 @@ class AuthApiController extends Controller {
                 $createdUser = $this->khachHangModel->find($userId);
                 unset($createdUser['mat_khau']);
 
+                rotate_session();
                 $_SESSION['user'] = $createdUser;
                 if (!empty($_SESSION['cart_session_id'])) {
                     $this->gioHangModel->mergeGuestCartToUser($_SESSION['cart_session_id'], (int)$userId);
@@ -140,6 +143,7 @@ class AuthApiController extends Controller {
      */
     public function logout(): void {
         unset($_SESSION['user'], $_SESSION['admin']);
+        rotate_session();
         $this->json([
             'success' => true,
             'data'    => null,

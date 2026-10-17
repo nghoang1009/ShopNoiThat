@@ -17,7 +17,10 @@ class KhachHangModel extends Model {
     public function authenticate(string $email, string $password): ?array {
         $user = $this->findByEmail($email);
         if ($user && $user['trang_thai'] == 1) {
-            if (password_verify($password, $user['mat_khau']) || $user['mat_khau'] === $password) {
+            if (password_verify($password, $user['mat_khau'])) {
+                if (password_needs_rehash($user['mat_khau'], PASSWORD_BCRYPT)) {
+                    $this->update((int)$user['id'], ['mat_khau' => password_hash($password, PASSWORD_BCRYPT)]);
+                }
                 unset($user['mat_khau']); // Xóa hash khỏi session
                 return $user;
             }

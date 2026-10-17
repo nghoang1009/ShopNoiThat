@@ -156,3 +156,92 @@ function csrf_valid(): bool {
     return is_string($sent) && $sent !== '' && hash_equals(csrf_token(), $sent);
 }
 
+
+/**
+ * Lọc HTML theo danh sách cho phép (dùng cho mô tả sản phẩm do admin nhập).
+ * Giữ lại thẻ định dạng cơ bản, loại bỏ script/style/iframe, mọi thuộc tính on*, và URL javascript:/data:.
+ */
+function sanitize_html(?string $html): string {
+    $html = (string)$html;
+    if (trim($html) === '') return '';
+
+    $allowed = [
+        'p' => [], 'br' => [], 'hr' => [], 'strong' => [], 'b' => [], 'em' => [], 'i' => [], 'u' => [],
+        'ul' => [], 'ol' => [], 'li' => [], 'h2' => [], 'h3' => [], 'h4' => [], 'blockquote' => [],
+        'span' => [], 'div' => [], 'table' => [], 'thead' => [], 'tbody' => [], 'tr' => [], 'th' => [], 'td' => [],
+        'a'   => ['href', 'title'],
+        'img' => ['src', 'alt', 'title'],
+    ];
+    $drop = ['script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed', 'applet', 'form', 'input', 'button',
+             'textarea', 'select', 'option', 'link', 'meta', 'base', 'svg', 'math', 'noscript', 'template', 'title', 'head'];
+
+    $safeUrl = function (string $value): ?string {
+        $clean = preg_replace('/[\x00-\x20\x7f]+/u', '', $value);
+        if ($clean === null || $clean === '') return null;
+        if (preg_match('#^(https?://|mailto:|/|\#)#i', $clean)) return $value;
+        if (!preg_match('#^[a-z][a-z0-9+.\-]*:#i', $clean)) return $value; // đường dẫn tương đối
+        return null;
+    };
+
+    $prev = libxml_use_internal_errors(true);
+    $doc = new DOMDocument('1.0', 'UTF-8');
+    $doc->loadHTML('<?xml encoding="utf-8" ?><div id="sanitize-root">' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+    libxml_use_internal_errors($prev);
+
+    $root = $doc->getElementById('sanitize-root');
+    if (!$root) return htmlspecialchars($html, ENT_QUOTES, 'UTF-8');
+
+    $clean = function (DOMNode $parent) use (&$clean, $allowed, $drop, $safeUrl): void {
+        foreach (iterator_to_array($parent->childNodes) as $node) {
+            if ($node instanceof DOMElement) {
+                $tag = strtolower($node->tagName);
+                if (in_array($tag, $drop, true)) {
+                    $parent->removeChild($node);
+                    continue;
+                }
+                $clean($node);
+                if (!isset($allowed[$tag])) {
+                    // Thẻ không được phép: giữ nội dung, bỏ thẻ
+                    while ($node->firstChild) {
+                        $parent->insertBefore($node->firstChild, $node);
+                    }
+                    $parent->removeChild($node);
+                    continue;
+                }
+                foreach (iterator_to_array($node->attributes) as $attr) {
+                    $name = strtolower($attr->name);
+                    if (!in_array($name, $allowed[$tag], true)) {
+                        $node->removeAttribute($attr->name);
+                    } elseif (in_array($name, ['href', 'src'], true) && $safeUrl($attr->value) === null) {
+                        $node->removeAttribute($attr->name);
+                    }
+                }
+                if ($tag === 'img' && !$node->hasAttribute('src')) {
+                    $parent->removeChild($node);
+                } elseif ($tag === 'a') {
+                    $node->setAttribute('rel', 'noopener noreferrer nofollow');
+                }
+            } elseif (!($node instanceof DOMText)) {
+                $parent->removeChild($node); // comment, CDATA, processing instruction...
+            }
+        }
+    };
+    $clean($root);
+
+    $out = '';
+    foreach ($root->childNodes as $child) {
+        $out .= $doc->saveHTML($child);
+    }
+    return $out;
+}
+
+/**
+ * Đổi session ID sau khi đăng nhập/đăng xuất (chống session fixation) và xoay vòng CSRF token
+ */
+function rotate_session(): void {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+    unset($_SESSION['csrf_token']);
+}

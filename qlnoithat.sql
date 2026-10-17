@@ -228,12 +228,12 @@ CREATE TABLE `tin_nhan_tu_van` (
 
 -- Nhân viên & Khách hàng (Mật khẩu mặc định: 123456)
 INSERT INTO `nhan_vien` (`id`, `ho_ten`, `tai_khoan`, `mat_khau`, `email`, `sdt`, `vai_tro`, `trang_thai`) VALUES
-(1, 'Quản Trị Viên', 'admin', '123456', 'admin@shopnoithat.vn', '0901234567', 'admin', 1),
-(2, 'Nhân Viên Bán Hàng', 'nhanvien', '123456', 'sales@shopnoithat.vn', '0907654321', 'nhan_vien', 1);
+(1, 'Quản Trị Viên', 'admin', '$2y$10$RwVhAbVeFFmzF9T9UrQkHujYjVKFP7NMYPiu/x5BB/soN1yqKEm5q', 'admin@shopnoithat.vn', '0901234567', 'admin', 1),
+(2, 'Nhân Viên Bán Hàng', 'nhanvien', '$2y$10$WbJZpBlgJVYQ2WdZVIZpZ.TplHiDu5yu75GC9cZ6qBFLYb2/EhHtW', 'sales@shopnoithat.vn', '0907654321', 'nhan_vien', 1);
 
 INSERT INTO `khach_hang` (`id`, `ho_ten`, `email`, `sdt`, `mat_khau`, `dia_chi`, `trang_thai`) VALUES
-(1, 'Nguyễn Văn An', 'nguyenvanan@gmail.com', '0912345678', '123456', 'Số 123 Đường Nguyễn Huệ, Quận 1, TP.HCM', 1),
-(2, 'Trần Thị Mai', 'tranthimai@gmail.com', '0987654321', '123456', 'Số 45 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội', 1);
+(1, 'Nguyễn Văn An', 'nguyenvanan@gmail.com', '0912345678', '$2y$10$Muya73713qaI7uNIoMh3C.BMyPw4uYzSWCsg4Yy.dRj3trF54Rz/m', 'Số 123 Đường Nguyễn Huệ, Quận 1, TP.HCM', 1),
+(2, 'Trần Thị Mai', 'tranthimai@gmail.com', '0987654321', '$2y$10$e8WPPmlZ0erQ4ikqtllXHefj5E0wHELGJiGXCTpFX84i3CYmmTvlq', 'Số 45 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội', 1);
 
 -- Nhà cung cấp
 INSERT INTO `nha_cung_cap` (`id`, `ten_nha_cung_cap`, `sdt`, `email`, `dia_chi`) VALUES

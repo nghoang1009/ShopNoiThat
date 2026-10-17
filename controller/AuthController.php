@@ -38,6 +38,7 @@ class AuthController extends Controller {
 
                 $user = $this->khachHangModel->authenticate($email, $password);
                 if ($user) {
+                    rotate_session();
                     $_SESSION['user'] = $user;
 
                     // Hợp nhất giỏ hàng guest vào user
@@ -125,6 +126,7 @@ class AuthController extends Controller {
                 if ($userId) {
                     $userData['id'] = $userId;
                     unset($userData['mat_khau']);
+                    rotate_session();
                     $_SESSION['user'] = $userData;
 
                     // Gộp giỏ hàng nếu có
@@ -164,6 +166,7 @@ class AuthController extends Controller {
      */
     public function logout(): void {
         unset($_SESSION['user']);
+        rotate_session();
         set_flash('auth_success', 'Đã đăng xuất thành công.', 'info');
         redirect('');
     }

@@ -126,7 +126,7 @@ $extraImages = !empty($product['hinh_anh_phu']) ? json_decode($product['hinh_anh
             Mô Tả Sản Phẩm
         </h3>
         <div style="font-size:15px; line-height:1.8; color:#475569;">
-            <?php echo !empty($product['mo_ta']) ? $product['mo_ta'] : '<p>Chưa có mô tả chi tiết cho sản phẩm này.</p>'; ?>
+            <?php echo !empty($product['mo_ta']) ? sanitize_html($product['mo_ta']) : '<p>Chưa có mô tả chi tiết cho sản phẩm này.</p>'; ?>
         </div>
     </div>
 

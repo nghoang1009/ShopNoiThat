@@ -31,8 +31,10 @@ class NhanVienModel extends Model {
         ]);
 
         if ($admin) {
-            // Hỗ trợ cả bcrypt và fallback demo text nếu có
-            if (password_verify($password, $admin['mat_khau']) || $admin['mat_khau'] === $password) {
+            if (password_verify($password, $admin['mat_khau'])) {
+                if (password_needs_rehash($admin['mat_khau'], PASSWORD_BCRYPT)) {
+                    $this->update((int)$admin['id'], ['mat_khau' => password_hash($password, PASSWORD_BCRYPT)]);
+                }
                 unset($admin['mat_khau']);
                 return $admin;
             }
