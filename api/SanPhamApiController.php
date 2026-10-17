@@ -274,7 +274,7 @@ class SanPhamApiController extends Controller {
      * Xóa sản phẩm (Admin)
      */
     public function delete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
 
         do {

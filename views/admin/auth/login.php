@@ -32,6 +32,7 @@
         <?php endif; ?>
 
         <form action="<?php echo base_url('admin/login'); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <div style="margin-bottom: 20px;">
                 <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #334155;">Tài khoản / Email</label>
                 <input type="text" name="username" required placeholder="admin hoặc nhanvien" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">

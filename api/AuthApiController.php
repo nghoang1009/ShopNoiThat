@@ -32,12 +32,11 @@ class AuthApiController extends Controller {
                 $admin = $this->nhanVienModel->authenticate($account, $password);
                 if ($admin) {
                     $_SESSION['admin'] = $admin;
-                    $admin['token'] = base64_encode(json_encode([
+                    $admin['token'] = sign_token([
                         'id'      => $admin['id'],
                         'email'   => $admin['email'],
-                        'vai_tro' => $admin['vai_tro'],
-                        'time'    => time()
-                    ]));
+                        'vai_tro' => $admin['vai_tro']
+                    ]);
 
                     $this->json([
                         'success' => true,
@@ -54,12 +53,11 @@ class AuthApiController extends Controller {
                         $this->gioHangModel->mergeGuestCartToUser($_SESSION['cart_session_id'], (int)$user['id']);
                     }
 
-                    $user['token'] = base64_encode(json_encode([
+                    $user['token'] = sign_token([
                         'id'    => $user['id'],
                         'email' => $user['email'],
-                        'type'  => 'client',
-                        'time'  => time()
-                    ]));
+                        'type'  => 'client'
+                    ]);
 
                     $this->json([
                         'success' => true,
@@ -121,12 +119,11 @@ class AuthApiController extends Controller {
                     $this->gioHangModel->mergeGuestCartToUser($_SESSION['cart_session_id'], (int)$userId);
                 }
 
-                $createdUser['token'] = base64_encode(json_encode([
+                $createdUser['token'] = sign_token([
                     'id'    => $createdUser['id'],
                     'email' => $createdUser['email'],
-                    'type'  => 'client',
-                    'time'  => time()
-                ]));
+                    'type'  => 'client'
+                ]);
 
                 $this->created($createdUser, 'Đăng ký tài khoản thành công.');
                 return;
@@ -159,7 +156,7 @@ class AuthApiController extends Controller {
         $token = $this->getBearerToken();
 
         if (!$user && $token) {
-            $decoded = json_decode(base64_decode($token), true);
+            $decoded = verify_token($token);
             if (!empty($decoded['id'])) {
                 if (isset($decoded['vai_tro'])) {
                     $user = $this->nhanVienModel->find($decoded['id']);

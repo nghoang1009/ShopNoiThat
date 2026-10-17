@@ -153,7 +153,7 @@ class DanhMucApiController extends Controller {
      * Xóa danh mục (Admin)
      */
     public function delete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
 
         do {

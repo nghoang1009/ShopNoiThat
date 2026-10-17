@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
 
 <div class="card-box" style="max-width: 700px;">
     <form action="<?php echo base_url('admin/nhan-vien/them'); ?>" method="POST">
+        <?php echo csrf_field(); ?>
         <div class="form-group" style="margin-bottom: 20px;">
             <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Họ và tên <span style="color:red;">*</span></label>
             <input type="text" name="ho_ten" required placeholder="Nguyễn Văn B" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">

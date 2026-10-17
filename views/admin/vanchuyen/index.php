@@ -105,6 +105,7 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
     <div style="background:#fff; width:100%; max-width:500px; border-radius:8px; padding:25px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
         <h3 style="font-size:18px; margin-bottom:15px; color:#1e293b;" id="modalTitle">Cập Nhật Vận Đơn</h3>
         <form action="<?php echo base_url('admin/van-chuyen/cap-nhat'); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="don_hang_id" id="modalOrderId">
 
             <div class="form-group" style="margin-bottom:15px;">

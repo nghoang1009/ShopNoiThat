@@ -177,7 +177,7 @@ App::get('admin/danh-muc/them', ['AdminController', 'danhmucCreate']);
 App::post('admin/danh-muc/them', ['AdminController', 'danhmucCreate']);
 App::get('admin/danh-muc/sua/{id}', ['AdminController', 'danhmucEdit']);
 App::post('admin/danh-muc/sua/{id}', ['AdminController', 'danhmucEdit']);
-App::get('admin/danh-muc/xoa/{id}', ['AdminController', 'danhmucDelete']);
+App::post('admin/danh-muc/xoa/{id}', ['AdminController', 'danhmucDelete']);
 
 // Quản lý Sản phẩm
 App::get('admin/san-pham', ['AdminController', 'sanphamIndex']);
@@ -200,17 +200,17 @@ App::get('admin/van-chuyen/phuong-thuc/them', ['AdminController', 'vanchuyenMeth
 App::post('admin/van-chuyen/phuong-thuc/them', ['AdminController', 'vanchuyenMethodCreate']);
 App::get('admin/van-chuyen/phuong-thuc/sua/{id}', ['AdminController', 'vanchuyenMethodEdit']);
 App::post('admin/van-chuyen/phuong-thuc/sua/{id}', ['AdminController', 'vanchuyenMethodEdit']);
-App::get('admin/van-chuyen/phuong-thuc/xoa/{id}', ['AdminController', 'vanchuyenMethodDelete']);
+App::post('admin/van-chuyen/phuong-thuc/xoa/{id}', ['AdminController', 'vanchuyenMethodDelete']);
 
 // Quản lý & Đối soát Thanh toán
 App::get('admin/thanh-toan', ['AdminController', 'thanhtoanIndex']);
-App::get('admin/thanh-toan/xac-nhan/{id}', ['AdminController', 'thanhtoanConfirm']);
+App::post('admin/thanh-toan/xac-nhan/{id}', ['AdminController', 'thanhtoanConfirm']);
 App::get('admin/thanh-toan/phuong-thuc', ['AdminController', 'thanhtoanMethods']);
-App::get('admin/thanh-toan/doi-trang-thai/{id}', ['AdminController', 'thanhtoanToggleMethod']);
+App::post('admin/thanh-toan/doi-trang-thai/{id}', ['AdminController', 'thanhtoanToggleMethod']);
 
 // Quản lý Khách hàng
 App::get('admin/khach-hang', ['AdminController', 'khachhangIndex']);
-App::get('admin/khach-hang/doi-trang-thai/{id}', ['AdminController', 'khachhangToggleStatus']);
+App::post('admin/khach-hang/doi-trang-thai/{id}', ['AdminController', 'khachhangToggleStatus']);
 
 // Quản lý Nhân viên
 App::get('admin/nhan-vien', ['AdminController', 'nhanvienIndex']);
@@ -218,9 +218,9 @@ App::get('admin/nhan-vien/them', ['AdminController', 'nhanvienCreate']);
 App::post('admin/nhan-vien/them', ['AdminController', 'nhanvienCreate']);
 App::get('admin/nhan-vien/sua/{id}', ['AdminController', 'nhanvienEdit']);
 App::post('admin/nhan-vien/sua/{id}', ['AdminController', 'nhanvienEdit']);
-App::get('admin/nhan-vien/xoa/{id}', ['AdminController', 'nhanvienDelete']);
+App::post('admin/nhan-vien/xoa/{id}', ['AdminController', 'nhanvienDelete']);
 
 // Quản lý Lịch sử Tư vấn AI Assistant
 App::get('admin/tu-van', ['AdminController', 'tuvanIndex']);
 App::get('admin/tu-van/chi-tiet/{id}', ['AdminController', 'tuvanDetail']);
-App::get('admin/tu-van/xoa/{id}', ['AdminController', 'tuvanDelete']);
+App::post('admin/tu-van/xoa/{id}', ['AdminController', 'tuvanDelete']);

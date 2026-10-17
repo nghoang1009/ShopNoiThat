@@ -14,6 +14,20 @@ class TuVanApiController extends Controller {
     }
 
     /**
+     * Phiên tư vấn chỉ thuộc về chủ phiên (tài khoản / session khách vãng lai) hoặc admin
+     */
+    private function canAccessSession(array $session): bool {
+        if ($this->currentAdmin()) {
+            return true;
+        }
+        $user = $this->currentClient();
+        if ($user && !empty($session['khach_hang_id']) && (int)$session['khach_hang_id'] === (int)$user['id']) {
+            return true;
+        }
+        return !empty($session['session_id']) && hash_equals((string)$session['session_id'], $this->getCartSessionId());
+    }
+
+    /**
      * POST /api/v1/phien-tu-van
      * Tạo hoặc lấy phiên tư vấn hiện tại (hỗ trợ force_new: true để làm mới)
      */
@@ -46,6 +60,11 @@ class TuVanApiController extends Controller {
             return;
         }
 
+        if (!$this->canAccessSession($session)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền truy cập phiên tư vấn này.'], 403);
+            return;
+        }
+
         $messages = $this->tuVanModel->getMessagesBySessionId($sessionId);
 
         $this->json([
@@ -68,6 +87,11 @@ class TuVanApiController extends Controller {
 
         if (!$session) {
             $this->json(['success' => false, 'data' => null, 'message' => 'Phiên tư vấn không tồn tại.'], 404);
+            return;
+        }
+
+        if (!$this->canAccessSession($session)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền truy cập phiên tư vấn này.'], 403);
             return;
         }
 
@@ -159,7 +183,7 @@ class TuVanApiController extends Controller {
      * Xóa phiên tư vấn (Admin)
      */
     public function deleteSession($sessionId): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $sessionId = (int)$sessionId;
 
         $session = $this->tuVanModel->find($sessionId);

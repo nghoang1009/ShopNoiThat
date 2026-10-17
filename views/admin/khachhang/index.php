@@ -45,9 +45,9 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
                                 </span>
                             </td>
                             <td style="text-align: right;">
-                                <a href="<?php echo base_url('admin/khach-hang/doi-trang-thai/' . $c['id']); ?>" class="btn-admin <?php echo ($c['trang_thai'] == 1) ? 'btn-admin-danger' : 'btn-admin-primary'; ?> btn-admin-sm">
+                                <button type="button" onclick="postAction('<?php echo base_url('admin/khach-hang/doi-trang-thai/' . $c['id']); ?>', 'Xác nhận đổi trạng thái tài khoản khách hàng này?')" class="btn-admin <?php echo ($c['trang_thai'] == 1) ? 'btn-admin-danger' : 'btn-admin-primary'; ?> btn-admin-sm">
                                     <?php echo ($c['trang_thai'] == 1) ? 'Khóa' : 'Mở khóa'; ?>
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>

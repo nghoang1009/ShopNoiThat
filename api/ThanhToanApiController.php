@@ -62,7 +62,7 @@ class ThanhToanApiController extends Controller {
      * Thêm phương thức thanh toán mới (Admin)
      */
     public function createMethod(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $body = $this->getBody();
 
         $rules = [
@@ -103,7 +103,7 @@ class ThanhToanApiController extends Controller {
      * Bật/tắt hoặc cập nhật phương thức thanh toán (Admin)
      */
     public function patchMethod($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
         $body = $this->getBody();
 
@@ -152,17 +152,32 @@ class ThanhToanApiController extends Controller {
      * POST /api/v1/don-hang/{id}/thanh-toan
      * Tạo giao dịch thanh toán cho đơn hàng (trả 201 kèm mã QR và link thanh toán)
      */
-    public function createOrderPayment($orderId): void {
-        $orderId = (int)$orderId;
+    public function createOrderPayment($orderId = null): void {
+        $body = $this->getBody();
+        $orderId = (int)($orderId ?? ($body['don_hang_id'] ?? 0));
         $order = $this->donHangModel->find($orderId);
         if (!$order) {
             $this->json(['success' => false, 'data' => null, 'message' => 'Đơn hàng không tồn tại.'], 404);
             return;
         }
+        if (!$this->canAccessOrder($order)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền thanh toán đơn hàng này.'], 403);
+            return;
+        }
+        if ($order['trang_thai_thanh_toan'] === 'da_thanh_toan') {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Đơn hàng này đã được thanh toán.'], 409);
+            return;
+        }
 
-        $body = $this->getBody();
-        $methodId = !empty($body['phuong_thuc_thanh_toan_id']) ? (int)$body['phuong_thuc_thanh_toan_id'] : ($order['phuong_thuc_thanh_toan_id'] ?? 1);
-        $amount = !empty($body['so_tien']) ? (float)$body['so_tien'] : (float)$order['tong_tien'];
+        // Số tiền luôn lấy từ đơn hàng, không tin dữ liệu client; chỉ nhận phương thức đang bật
+        $methodId = (int)($order['phuong_thuc_thanh_toan_id'] ?? 1);
+        if (!empty($body['phuong_thuc_thanh_toan_id'])) {
+            $requested = $this->thanhToanModel->getMethodById((int)$body['phuong_thuc_thanh_toan_id']);
+            if ($requested && (int)($requested['trang_thai'] ?? 0) === 1) {
+                $methodId = (int)$requested['id'];
+            }
+        }
+        $amount = (float)$order['tong_tien'];
         $notes = $body['ghi_chu'] ?? ('Khởi tạo thanh toán cho đơn hàng #' . $order['ma_don_hang']);
 
         $method = $this->thanhToanModel->getMethodById($methodId);
@@ -199,6 +214,10 @@ class ThanhToanApiController extends Controller {
             $this->json(['success' => false, 'data' => null, 'message' => 'Đơn hàng không tồn tại.'], 404);
             return;
         }
+        if (!$this->canAccessOrder($order)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền xem thanh toán của đơn hàng này.'], 403);
+            return;
+        }
 
         $payment = $this->thanhToanModel->getByOrderId($orderId);
         if ($payment) {
@@ -217,6 +236,8 @@ class ThanhToanApiController extends Controller {
      * Cập nhật trạng thái thanh toán (Callback/Xác nhận thành công)
      */
     public function patchOrderPayment($orderId): void {
+        // Xác nhận đã nhận tiền chỉ dành cho admin/nhân viên (hoặc callback cổng thanh toán có chữ ký)
+        $this->requireAdminAuth();
         $orderId = (int)$orderId;
         $order = $this->donHangModel->find($orderId);
         if (!$order) {
@@ -261,6 +282,16 @@ class ThanhToanApiController extends Controller {
         do {
             if (empty($orderCode)) {
                 $this->json(['success' => false, 'data' => null, 'message' => 'Vui lòng cung cấp mã đơn hàng.'], 400);
+                break;
+            }
+
+            $order = $this->donHangModel->getOrderDetail(trim($orderCode));
+            if (!$order || !$this->canAccessOrder($order)) {
+                $this->json(['success' => false, 'data' => null, 'message' => 'Không tìm thấy đơn hàng hoặc bạn không có quyền thanh toán đơn này.'], 403);
+                break;
+            }
+            if (($order['phuong_thuc_thanh_toan'] ?? 'cod') === 'cod') {
+                $this->json(['success' => false, 'data' => null, 'message' => 'Đơn hàng thanh toán khi nhận hàng (COD) không thanh toán online.'], 400);
                 break;
             }
 

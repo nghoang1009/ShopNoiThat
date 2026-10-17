@@ -31,12 +31,7 @@ class DonHangApiController extends Controller {
         ];
 
         // Nếu là khách hàng (không có admin session/token), ép lọc theo khach_hang_id
-        $isAdmin = false;
-        $admin = $_SESSION['admin'] ?? null;
-        $token = $this->getBearerToken();
-        if ($admin || ($token && str_contains(base64_decode($token), 'admin'))) {
-            $isAdmin = true;
-        }
+        $isAdmin = $this->currentAdmin() !== null;
 
         if (!$isAdmin) {
             $user = $this->requireClientAuth();
@@ -127,6 +122,7 @@ class DonHangApiController extends Controller {
             $createResult = $this->donHangModel->createOrderFromCart($orderData, $cart['items']);
             if ($createResult['success']) {
                 $this->gioHangModel->clearCart($userId, $sessionId);
+                $this->rememberOrder((int)$createResult['order_id']);
 
                 $createdOrder = $this->donHangModel->getOrderDetail($createResult['order_id']);
 
@@ -161,12 +157,10 @@ class DonHangApiController extends Controller {
             return;
         }
 
-        // Kiểm tra quyền: nếu là user thường thì chỉ được xem đơn của mình
-        if (isset($_SESSION['user']['id']) && !isset($_SESSION['admin'])) {
-            if ($order['khach_hang_id'] && $order['khach_hang_id'] != $_SESSION['user']['id']) {
-                $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
-                return;
-            }
+        // Chỉ chủ đơn (đăng nhập / phiên đã đặt đơn) hoặc admin/nhân viên được xem
+        if (!$this->canAccessOrder($order)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
+            return;
         }
 
         $order['tong_tien_dinh_dang'] = format_currency($order['tong_tien']);
@@ -276,6 +270,10 @@ class DonHangApiController extends Controller {
         $order = $this->donHangModel->find((int)$id);
         if (!$order) {
             $this->json(['success' => false, 'data' => null, 'message' => 'Không tìm thấy đơn hàng.'], 404);
+            return;
+        }
+        if (!$this->canAccessOrder($order)) {
+            $this->json(['success' => false, 'data' => null, 'message' => 'Bạn không có quyền xem đơn hàng này.'], 403);
             return;
         }
 

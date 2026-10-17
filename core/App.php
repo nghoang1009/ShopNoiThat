@@ -104,6 +104,11 @@ class App {
 
                 $handler = $route['handler'];
 
+                if (!$this->passesCsrf($requestMethod, $url, $isApi)) {
+                    $this->handleError('Phiên làm việc không hợp lệ hoặc đã hết hạn (CSRF). Vui lòng tải lại trang và thử lại.', $isApi, 403);
+                    return;
+                }
+
                 if (is_callable($handler)) {
                     call_user_func_array($handler, $params);
                     return;
@@ -149,6 +154,31 @@ class App {
 
         // Không tìm thấy Route phù hợp -> 404
         $this->handleError("Đường dẫn `/{$url}` không tồn tại (404 Not Found).", $isApi, 404);
+    }
+
+    /**
+     * Chống CSRF: mọi request thay đổi dữ liệu (không phải GET/HEAD) phải kèm token.
+     * - Web: trường csrf_token trong form (hoặc header X-CSRF-Token)
+     * - API: có Bearer token (không dùng cookie nên không bị CSRF), hoặc header X-Requested-With / X-CSRF-Token
+     */
+    private function passesCsrf(string $method, string $url, bool $isApi): bool {
+        if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+            return true;
+        }
+
+        if ($isApi) {
+            $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+            if (stripos($auth, 'Bearer ') === 0) {
+                return true;
+            }
+            // Đăng nhập / đăng ký chưa có phiên xác thực để bị lợi dụng
+            if (in_array($url, ['api/v1/auth/login', 'api/v1/auth/register'], true)) {
+                return true;
+            }
+            return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || csrf_valid();
+        }
+
+        return csrf_valid();
     }
 
     /**

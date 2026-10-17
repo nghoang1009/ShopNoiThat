@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="<?php echo asset_url('assets/css/admin/admin.css'); ?>">
     <script>
         window.BASE_URL = "<?php echo BASE_URL; ?>";
+        window.CSRF_TOKEN = "<?php echo csrf_token(); ?>";
+        (function () {
+            var nativeFetch = window.fetch;
+            if (!nativeFetch) return;
+            window.fetch = function (input, init) {
+                init = init || {};
+                var method = (init.method || 'GET').toUpperCase();
+                if (method !== 'GET' && method !== 'HEAD') {
+                    var headers = new Headers(init.headers || {});
+                    headers.set('X-Requested-With', 'XMLHttpRequest');
+                    headers.set('X-CSRF-Token', window.CSRF_TOKEN);
+                    init.headers = headers;
+                }
+                return nativeFetch.call(this, input, init);
+            };
+        })();
     </script>
 </head>
 <body>

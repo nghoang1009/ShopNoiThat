@@ -65,6 +65,7 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
             </h3>
 
             <form action="<?php echo base_url('admin/don-hang/chi-tiet/' . $order['id']); ?>" method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Trạng thái đơn hàng</label>
                     <select name="trang_thai" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">

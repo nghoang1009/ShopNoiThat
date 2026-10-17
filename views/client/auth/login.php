@@ -11,6 +11,7 @@ $oldEmail = get_flash('old_email') ?? '';
         </h1>
 
         <form action="<?php echo base_url('auth/login'); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <div class="form-group">
                 <label class="form-label" for="email">Địa chỉ Email</label>
                 <input type="email" id="email" name="email" class="form-control" required

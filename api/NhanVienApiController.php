@@ -13,7 +13,7 @@ class NhanVienApiController extends Controller {
      * Danh sách nhân viên
      */
     public function index(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
 
         $employees = $this->nhanVienModel->all('id DESC');
         foreach ($employees as &$emp) {
@@ -32,7 +32,7 @@ class NhanVienApiController extends Controller {
      * Chi tiết nhân viên
      */
     public function detail($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
 
         $employee = $this->nhanVienModel->find($id);
@@ -54,7 +54,7 @@ class NhanVienApiController extends Controller {
      * Tạo mới tài khoản nhân viên (Admin)
      */
     public function create(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $body = $this->getBody();
 
         $rules = [
@@ -114,7 +114,7 @@ class NhanVienApiController extends Controller {
      * Cập nhật nhân viên
      */
     public function update($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
         $body = $this->getBody();
 
@@ -166,7 +166,7 @@ class NhanVienApiController extends Controller {
      * Xóa nhân viên
      */
     public function delete($id): void {
-        $admin = $this->requireAdminAuth();
+        $admin = $this->requireAdminRole();
         $id = (int)$id;
 
         do {

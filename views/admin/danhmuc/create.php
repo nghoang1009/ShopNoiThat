@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
 
 <div class="card-box" style="max-width: 700px;">
     <form action="<?php echo base_url('admin/danh-muc/them'); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
         <div class="form-group" style="margin-bottom: 20px;">
             <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Tên danh mục <span style="color:red;">*</span></label>
             <input type="text" name="ten_danh_muc" required placeholder="Ví dụ: Sofa & Ghế Thư Giãn" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none;">

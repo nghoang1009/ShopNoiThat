@@ -34,6 +34,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 // Khởi tạo session nếu chưa có
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
     session_start();
 }
 
@@ -100,3 +101,58 @@ function get_flash($key) {
 function has_flash($key) {
     return isset($_SESSION['flash'][$key]);
 }
+
+
+/**
+ * Bảo mật: khóa bí mật ký token, token CSRF
+ */
+function app_secret(): string {
+    static $secret = null;
+    if ($secret !== null) return $secret;
+    $secret = getenv('APP_SECRET') ?: '';
+    if ($secret === '') {
+        $file = __DIR__ . '/app_secret.key';
+        if (!is_file($file)) {
+            @file_put_contents($file, bin2hex(random_bytes(32)));
+        }
+        $secret = is_file($file) ? trim((string)file_get_contents($file)) : '';
+        if ($secret === '') {
+            $secret = hash('sha256', DB_NAME . DB_USER . __DIR__);
+        }
+    }
+    return $secret;
+}
+
+/** Tạo token Bearer có chữ ký HMAC và hạn dùng (mặc định 12 giờ) */
+function sign_token(array $payload, int $ttl = 43200): string {
+    $payload['exp'] = time() + $ttl;
+    $body = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+    return $body . '.' . hash_hmac('sha256', $body, app_secret());
+}
+
+/** Xác thực token; trả về payload hoặc null nếu sai chữ ký / hết hạn */
+function verify_token(?string $token): ?array {
+    if (!$token || substr_count($token, '.') !== 1) return null;
+    [$body, $sig] = explode('.', $token, 2);
+    if (!hash_equals(hash_hmac('sha256', $body, app_secret()), $sig)) return null;
+    $payload = json_decode(base64_decode(strtr($body, '-_', '+/')), true);
+    if (!is_array($payload) || empty($payload['exp']) || $payload['exp'] < time()) return null;
+    return $payload;
+}
+
+function csrf_token(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_field(): string {
+    return '<input type="hidden" name="csrf_token" value="' . csrf_token() . '">';
+}
+
+function csrf_valid(): bool {
+    $sent = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    return is_string($sent) && $sent !== '' && hash_equals(csrf_token(), $sent);
+}
+

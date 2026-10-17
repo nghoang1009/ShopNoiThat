@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
 
 <div class="card-box" style="max-width: 900px;">
     <form action="<?php echo base_url('admin/san-pham/them'); ?>" method="POST" enctype="multipart/form-data">
+        <?php echo csrf_field(); ?>
         <div class="form-grid">
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label style="display:block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Tên sản phẩm <span style="color:red;">*</span></label>

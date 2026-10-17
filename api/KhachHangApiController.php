@@ -59,7 +59,7 @@ class KhachHangApiController extends Controller {
      * Cập nhật trạng thái kích hoạt/khóa tài khoản
      */
     public function updateStatus($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
         $body = $this->getBody();
 

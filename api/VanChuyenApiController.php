@@ -64,7 +64,7 @@ class VanChuyenApiController extends Controller {
      * Tạo phương thức vận chuyển mới (Admin)
      */
     public function createMethod(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $body = $this->getBody();
 
         $rules = [
@@ -107,7 +107,7 @@ class VanChuyenApiController extends Controller {
      * Cập nhật phương thức vận chuyển (Admin)
      */
     public function updateMethod($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
         $body = $this->getBody();
 
@@ -159,7 +159,7 @@ class VanChuyenApiController extends Controller {
      * Xóa phương thức vận chuyển (Admin)
      */
     public function deleteMethod($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $id = (int)$id;
 
         do {

@@ -40,9 +40,11 @@ $currentUrl = $_GET['url'] ?? '';
         <a href="<?php echo base_url('admin/khach-hang'); ?>" class="sidebar-link <?php echo str_starts_with($currentUrl, 'admin/khach-hang') ? 'active' : ''; ?>">
             👥 Quản lý khách hàng
         </a>
+        <?php if (($currentAdmin['vai_tro'] ?? '') === 'admin'): ?>
         <a href="<?php echo base_url('admin/nhan-vien'); ?>" class="sidebar-link <?php echo str_starts_with($currentUrl, 'admin/nhan-vien') ? 'active' : ''; ?>">
             🛡️ Nhân viên & Quản trị
         </a>
+        <?php endif; ?>
     </div>
 
     <div class="sidebar-footer">

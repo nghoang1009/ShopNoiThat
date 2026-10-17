@@ -22,6 +22,7 @@ $orderErrors = is_array($orderErrorsFlash) && isset($orderErrorsFlash['message']
     </div>
 
     <form action="<?php echo base_url('don-hang/thanh-toan'); ?>" method="POST" id="checkout-form">
+        <?php echo csrf_field(); ?>
         <div class="checkout-layout">
             <!-- Cột trái: Thông tin nhận hàng, Vận chuyển & Thanh toán -->
             <div class="checkout-box">

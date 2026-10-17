@@ -46,6 +46,7 @@ class AdminController extends Controller {
 
                 $admin = $this->nhanVienModel->authenticate($username, $password);
                 if ($admin) {
+                    rotate_session();
                     $_SESSION['admin'] = $admin;
                     set_flash('admin_msg', 'Chào mừng ' . $admin['ho_ten'] . ' quay lại trang quản trị!', 'success');
                     redirect('admin');
@@ -69,6 +70,7 @@ class AdminController extends Controller {
      */
     public function logout(): void {
         unset($_SESSION['admin']);
+        rotate_session();
         set_flash('admin_msg', 'Đã đăng xuất thành công.', 'info');
         redirect('admin/login');
     }
@@ -140,7 +142,7 @@ class AdminController extends Controller {
     }
 
     public function vanchuyenMethods(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $methods = $this->vanChuyenModel->getAllMethods();
 
         $this->view('admin/vanchuyen/methods', [
@@ -150,7 +152,7 @@ class AdminController extends Controller {
     }
 
     public function vanchuyenMethodCreate(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         if ($this->isPost()) {
             $post = $this->getPost();
             $data = [
@@ -173,7 +175,7 @@ class AdminController extends Controller {
     }
 
     public function vanchuyenMethodEdit($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $method = $this->vanChuyenModel->getMethodById((int)$id);
         if (!$method) {
             set_flash('vc_error', 'Phương thức không tồn tại.', 'danger');
@@ -203,7 +205,7 @@ class AdminController extends Controller {
     }
 
     public function vanchuyenMethodDelete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $this->vanChuyenModel->deleteMethod((int)$id);
         set_flash('vc_success', 'Đã xóa phương thức vận chuyển.', 'success');
         redirect('admin/van-chuyen/phuong-thuc');
@@ -235,14 +237,14 @@ class AdminController extends Controller {
 
     public function thanhtoanConfirm($id): void {
         $this->requireAdminAuth();
-        $transCode = $_GET['ma_gd'] ?? ('TXN' . date('YmdHis'));
+        $transCode = 'TXN' . date('YmdHis') . random_int(100, 999);
         $this->thanhToanModel->confirmPayment((int)$id, $transCode, 'Admin xác nhận thanh toán trực tiếp');
         set_flash('tt_success', 'Xác nhận thanh toán và đồng bộ đơn hàng thành công!', 'success');
         redirect('admin/thanh-toan');
     }
 
     public function thanhtoanMethods(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $methods = $this->thanhToanModel->getAllMethods();
 
         $this->view('admin/thanhtoan/methods', [
@@ -252,7 +254,7 @@ class AdminController extends Controller {
     }
 
     public function thanhtoanToggleMethod($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $this->thanhToanModel->toggleMethodStatus((int)$id);
         set_flash('tt_success', 'Đã cập nhật trạng thái phương thức thanh toán!', 'success');
         redirect('admin/thanh-toan/phuong-thuc');
@@ -361,7 +363,7 @@ class AdminController extends Controller {
     }
 
     public function danhmucDelete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $this->danhMucModel->delete((int)$id);
         set_flash('dm_success', 'Xóa danh mục thành công!', 'success');
         redirect('admin/danh-muc');
@@ -517,7 +519,7 @@ class AdminController extends Controller {
     }
 
     public function sanphamDelete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $this->sanPhamModel->delete((int)$id);
         set_flash('sp_success', 'Xóa sản phẩm thành công!', 'success');
         redirect('admin/san-pham');
@@ -583,7 +585,7 @@ class AdminController extends Controller {
     }
 
     public function khachhangToggleStatus($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $customer = $this->khachHangModel->find($id);
         if ($customer) {
             $newStatus = $customer['trang_thai'] == 1 ? 0 : 1;
@@ -594,7 +596,7 @@ class AdminController extends Controller {
     }
 
     public function nhanvienIndex(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $staffs = $this->nhanVienModel->all('id ASC');
 
         $this->view('admin/nhanvien/index', [
@@ -604,7 +606,7 @@ class AdminController extends Controller {
     }
 
     public function nhanvienCreate(): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
 
         if ($this->isPost()) {
             $post = $this->getPost();
@@ -647,7 +649,7 @@ class AdminController extends Controller {
     }
 
     public function nhanvienEdit($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $staff = $this->nhanVienModel->find($id);
         if (!$staff) {
             set_flash('nv_error', 'Nhân viên không tồn tại.', 'danger');
@@ -697,7 +699,7 @@ class AdminController extends Controller {
     }
 
     public function nhanvienDelete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         if ($id == 1 || (isset($_SESSION['admin']['id']) && $_SESSION['admin']['id'] == $id)) {
             set_flash('nv_error', 'Không thể xóa tài khoản quản trị chính hoặc tài khoản đang đăng nhập.', 'danger');
             redirect('admin/nhan-vien');
@@ -816,7 +818,7 @@ class AdminController extends Controller {
     }
 
     public function tuvanDelete($id): void {
-        $this->requireAdminAuth();
+        $this->requireAdminRole();
         $this->tuVanModel->delete((int)$id);
         set_flash('tuvan_success', 'Đã xóa phiên tư vấn thành công!', 'success');
         redirect('admin/tu-van');

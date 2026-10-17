@@ -97,9 +97,9 @@ require_once __DIR__ . '/../../../includes/admin_sidebar.php';
                             </td>
                             <td style="text-align: right;">
                                 <?php if ($t['trang_thai'] !== 'da_thanh_toan'): ?>
-                                    <a href="<?php echo base_url('admin/thanh-toan/xac-nhan/' . $t['id']); ?>" onclick="return confirm('Bạn có chắc muốn xác nhận đơn này đã nhận tiền thành công?')" class="btn-admin btn-admin-primary btn-admin-sm">
+                                    <button type="button" onclick="postAction('<?php echo base_url('admin/thanh-toan/xac-nhan/' . $t['id']); ?>', 'Bạn có chắc muốn xác nhận đơn này đã nhận tiền thành công?')" class="btn-admin btn-admin-primary btn-admin-sm">
                                         ✓ Xác nhận đã thu
-                                    </a>
+                                    </button>
                                 <?php else: ?>
                                     <span style="color: #15803d; font-size: 13px; font-weight: 600;">Đã khớp</span>
                                 <?php endif; ?>

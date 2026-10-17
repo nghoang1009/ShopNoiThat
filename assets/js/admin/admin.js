@@ -25,11 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initRevenueChart();
 });
 
+// Gửi thao tác thay đổi dữ liệu bằng POST kèm CSRF token (sau khi xác nhận)
+window.postAction = function(url, message) {
+  if (message && !confirm(message)) return;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'csrf_token';
+  input.value = window.CSRF_TOKEN || '';
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+};
+
 // Hàm xác nhận xóa
 window.confirmDelete = function(url, message = 'Bạn có chắc chắn muốn xóa bản ghi này không? Hành động này không thể hoàn tác!') {
-  if (confirm(message)) {
-    window.location.href = url;
-  }
+  window.postAction(url, message);
 };
 
 // Vẽ biểu đồ Canvas doanh thu 7 ngày

@@ -170,7 +170,7 @@ class Controller {
         $user = $_SESSION['user'] ?? null;
         $token = $this->getBearerToken();
         if (!$user && $token) {
-            $decoded = json_decode(base64_decode($token), true);
+            $decoded = verify_token($token);
             if (!empty($decoded['id']) && ($decoded['type'] ?? '') === 'client') {
                 $user = $decoded;
             }
@@ -193,8 +193,8 @@ class Controller {
         $admin = $_SESSION['admin'] ?? null;
         $token = $this->getBearerToken();
         if (!$admin && $token) {
-            $decoded = json_decode(base64_decode($token), true);
-            if (!empty($decoded['id']) && in_array($decoded['vai_tro'] ?? '', ['admin', 'nhan_vien'])) {
+            $decoded = verify_token($token);
+            if (!empty($decoded['id']) && in_array($decoded['vai_tro'] ?? '', ['admin', 'nhan_vien'], true)) {
                 $admin = $decoded;
             }
         }
@@ -207,6 +207,70 @@ class Controller {
             redirect('admin/login');
         }
         return $admin;
+    }
+
+    /**
+     * Chỉ cho phép vai trò admin (nhân viên bị từ chối 403)
+     */
+    protected function requireAdminRole(): array {
+        $admin = $this->requireAdminAuth();
+        if (($admin['vai_tro'] ?? '') !== 'admin') {
+            if ($this->isApiRequest()) {
+                $this->json(['success' => false, 'data' => null, 'message' => 'Chỉ quản trị viên (admin) mới có quyền thực hiện thao tác này.'], 403);
+            }
+            set_flash('admin_msg', 'Bạn không có quyền thực hiện thao tác này (chỉ dành cho Admin).', 'danger');
+            redirect('admin');
+        }
+        return $admin;
+    }
+
+    /**
+     * Request hiện tại có phải của admin/nhân viên đã xác thực hợp lệ hay không (không redirect/401)
+     */
+    protected function currentAdmin(): ?array {
+        $admin = $_SESSION['admin'] ?? null;
+        if (!$admin) {
+            $decoded = verify_token($this->getBearerToken());
+            if (!empty($decoded['id']) && in_array($decoded['vai_tro'] ?? '', ['admin', 'nhan_vien'], true)) {
+                $admin = $decoded;
+            }
+        }
+        return (!empty($admin['id'])) ? $admin : null;
+    }
+
+    /**
+     * Khách hàng hiện tại (session hoặc token ký hợp lệ), không redirect/401
+     */
+    protected function currentClient(): ?array {
+        $user = $_SESSION['user'] ?? null;
+        if (!$user) {
+            $decoded = verify_token($this->getBearerToken());
+            if (!empty($decoded['id']) && ($decoded['type'] ?? '') === 'client') {
+                $user = $decoded;
+            }
+        }
+        return (!empty($user['id'])) ? $user : null;
+    }
+
+    /**
+     * Ghi nhớ đơn hàng vừa tạo trong phiên hiện tại (để khách vãng lai xem được đơn của chính mình)
+     */
+    protected function rememberOrder(int $orderId): void {
+        $_SESSION['my_orders'][$orderId] = true;
+    }
+
+    /**
+     * Quyền truy cập đơn hàng: admin/nhân viên, chủ đơn đã đăng nhập, hoặc phiên đã tạo đơn đó
+     */
+    protected function canAccessOrder(array $order): bool {
+        if ($this->currentAdmin()) {
+            return true;
+        }
+        $user = $this->currentClient();
+        if ($user && !empty($order['khach_hang_id']) && (int)$order['khach_hang_id'] === (int)$user['id']) {
+            return true;
+        }
+        return !empty($_SESSION['my_orders'][(int)$order['id']]);
     }
 
     /**

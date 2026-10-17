@@ -28,6 +28,7 @@ $registerErrors = is_array($registerErrorsFlash) && isset($registerErrorsFlash['
         <?php endif; ?>
 
         <form action="<?php echo base_url('auth/register'); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <div class="form-group">
                 <label class="form-label" for="ho_ten">Họ và tên <span style="color:red;">*</span></label>
                 <input type="text" id="ho_ten" name="ho_ten" class="form-control" required

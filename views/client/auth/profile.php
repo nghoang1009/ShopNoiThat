@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../../includes/header.php';
         </h1>
 
         <form action="<?php echo base_url('auth/profile'); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <div class="form-group">
                 <label class="form-label" for="email">Địa chỉ Email (không thể đổi)</label>
                 <input type="email" id="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" disabled style="background:#f1f5f9;">

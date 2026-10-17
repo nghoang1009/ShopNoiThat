@@ -110,6 +110,7 @@ class DonHangController extends Controller {
             $result = $this->donHangModel->createOrderFromCart($orderData, $cart['items']);
             if ($result['success']) {
                 $this->gioHangModel->clearCart($userId, $sessionId);
+                $this->rememberOrder((int)$result['order_id']);
 
                 // Nếu là thanh toán online (chuyển khoản VietQR, MoMo, VNPAY) -> chuyển sang trang thanh toán riêng
                 if (in_array($paymentCode, ['banking', 'momo', 'vnpay', 'zalopay'])) {
@@ -135,6 +136,11 @@ class DonHangController extends Controller {
         $order = $this->donHangModel->getOrderDetail($orderCode);
         if (!$order) {
             set_flash('order_error', 'Không tìm thấy đơn hàng cần thanh toán.', 'danger');
+            redirect('san-pham');
+            return;
+        }
+        if (!$this->canAccessOrder($order)) {
+            set_flash('order_error', 'Bạn không có quyền truy cập đơn hàng này.', 'danger');
             redirect('san-pham');
             return;
         }
@@ -178,6 +184,9 @@ class DonHangController extends Controller {
         $order = null;
         if (!empty($orderCode)) {
             $order = $this->donHangModel->getOrderDetail($orderCode);
+            if ($order && !$this->canAccessOrder($order)) {
+                $order = null;
+            }
         }
 
         $this->view('client/donhang/success', [
@@ -214,8 +223,8 @@ class DonHangController extends Controller {
             return;
         }
 
-        // Bảo vệ quyền riêng tư nếu đang đăng nhập tài khoản khác
-        if (isset($_SESSION['user']['id']) && $order['khach_hang_id'] && $order['khach_hang_id'] != $_SESSION['user']['id']) {
+        // Chỉ chủ đơn (đăng nhập / phiên đã đặt đơn) hoặc admin/nhân viên được xem
+        if (!$this->canAccessOrder($order)) {
             set_flash('order_error', 'Bạn không có quyền truy cập đơn hàng này.', 'danger');
             redirect('don-hang/lich-su');
             return;
